@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AuditorPro EMA v5.0</title>
+<title>AuditorPro EMA v5.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
@@ -213,14 +213,210 @@ tbody tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .fade-up{animation:fadeUp .3s ease forwards}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ============================================================
+   RESPONSIVE v5.1 — Mobile-first (breakpoint 768px / 480px)
+   ============================================================ */
+
+/* Hamburger / mobile top bar */
+.mob-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 150;
+}
+.mob-menu-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: .15s;
+}
+.mob-menu-btn:hover { border-color: var(--accent); color: var(--accent); }
+.mob-topbar-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.mob-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+}
+.mob-overlay.open { display: block; }
+
+@media (max-width: 768px) {
+  /* ── Sidebar: drawer ──────────────────────────────────── */
+  .sidebar {
+    position: fixed;
+    left: -240px;
+    top: 0;
+    height: 100%;
+    height: 100dvh;
+    z-index: 200;
+    transition: left .25s ease;
+    width: 220px;
+    min-width: 220px;
+    box-shadow: 4px 0 24px rgba(0,0,0,.5);
+  }
+  .sidebar.mob-open { left: 0; }
+
+  /* ── Mobile top bar visible ───────────────────────────── */
+  .mob-topbar { display: flex; }
+
+  /* ── Main takes full width ────────────────────────────── */
+  .main { width: 100%; min-width: 0; }
+
+  /* ── Pages: reduce padding ────────────────────────────── */
+  .page { padding: 12px 14px; }
+  .page.active { display: block; }
+
+  /* ── Topbar desktop: compact ──────────────────────────── */
+  .topbar {
+    padding: 8px 14px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tb-left .tb-title { font-size: 15px; }
+  .tb-left .tb-sub { display: none; }
+  .tb-right { gap: 5px; flex-wrap: wrap; }
+
+  /* ── KPI grids: override inline repeat(N,1fr) ─────────── */
+  #kpi-stock,
+  #kpi-conc,
+  #kpi-traz,
+  #kpi-med-top,
+  #kpi-stock-top {
+    grid-template-columns: repeat(2, 1fr) !important;
+    padding: 12px 14px 0 !important;
+    gap: 10px !important;
+  }
+  .kpi-val { font-size: 20px; }
+  .kpi-card { padding: 12px; }
+
+  /* ── Any inline 3-col or 2-col grid → 1 col ──────────── */
+  [style*="grid-template-columns:1fr 1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Upload zones: 1 col ──────────────────────────────── */
+  .upload-grid { grid-template-columns: 1fr !important; }
+  .upload-zone { padding: 14px; }
+
+  /* ── Progress steps: 3 col ────────────────────────────── */
+  .progress-steps { grid-template-columns: repeat(3, 1fr); }
+  .progress-step { font-size: 9px; padding: 5px 2px; }
+
+  /* ── Filters: stack ───────────────────────────────────── */
+  .filters { padding: 10px 14px; gap: 6px; }
+  .fi { min-width: 100%; font-size: 13px; padding: 9px 10px; }
+
+  /* ── Tables: momentum scroll ──────────────────────────── */
+  .table-wrap { -webkit-overflow-scrolling: touch; overflow-x: auto; }
+  table { font-size: 12px; }
+  td, th { padding: 8px 10px; }
+
+  /* ── Buttons: touch-friendly ──────────────────────────── */
+  .btn { padding: 10px 14px; font-size: 11px; min-height: 38px; }
+  .btn-primary { padding: 15px 20px; font-size: 14px; }
+
+  /* ── Nav items: more touch area ───────────────────────── */
+  .nav-item { padding: 13px 18px; }
+  .nav-label { padding: 14px 18px 6px; }
+
+  /* ── Section heads: wrap ──────────────────────────────── */
+  .section-head { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .section-actions { flex-wrap: wrap; gap: 6px; }
+
+  /* ── Anomaly blocks ───────────────────────────────────── */
+  .anom-head { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .anom-title { font-size: 12px; min-width: 0; flex: 1 1 60%; }
+  .anom-count { font-size: 16px; }
+  .anom-priority { font-size: 10px; padding: 2px 8px; }
+
+  /* ── Charts bar labels ────────────────────────────────── */
+  .bar-label { width: 90px; font-size: 10px; }
+  .bar-val   { width: 38px; font-size: 10px; }
+
+  /* ── CSB cuadrilla blocks ─────────────────────────────── */
+  .csb-head { padding: 10px 14px; flex-wrap: wrap; }
+  .csb-meta { gap: 8px; }
+  .csb-nums { gap: 10px; flex-wrap: wrap; }
+
+  /* ── Pagination ───────────────────────────────────────── */
+  .pagination { padding: 8px 14px; font-size: 10px; flex-wrap: wrap; gap: 6px; }
+  .pag-btn { padding: 6px 10px; min-height: 32px; }
+
+  /* ── Toast ────────────────────────────────────────────── */
+  .toast { bottom: 10px; right: 10px; left: 10px; max-width: none; font-size: 11px; }
+
+  /* ── Modal ────────────────────────────────────────────── */
+  .modal { width: 96vw; max-height: 92dvh; border-radius: 8px; }
+  .modal-body { padding: 16px; }
+  .modal-kv { grid-template-columns: 110px 1fr; }
+
+  /* ── Restore banner ───────────────────────────────────── */
+  #restore-banner { padding: 10px 14px !important; gap: 10px !important; }
+
+  /* ── Section inline padding ───────────────────────────── */
+  [style*="padding:24px 28px"],
+  [style*="padding: 24px 28px"] {
+    padding: 12px 14px !important;
+  }
+  [style*="padding:16px 28px"],
+  [style*="padding: 16px 28px"] {
+    padding: 12px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #kpi-stock, #kpi-conc, #kpi-traz, #kpi-med-top, #kpi-stock-top {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .kpi-val { font-size: 18px; }
+  .kpi-label { font-size: 9px; }
+  .topbar { padding: 7px 10px; }
+  .page { padding: 10px 10px; }
+  .anom-title { font-size: 11px; }
+  .bar-label { width: 70px; font-size: 9px; }
+  .tb-right .badge { font-size: 8px; padding: 2px 5px; }
+  .progress-steps { grid-template-columns: repeat(2, 1fr); }
+  .progress-step { font-size: 8px; }
+}
 </style>
 </head>
 <body>
 <div class="shell">
+<div class="mob-overlay" id="mob-overlay"></div>
 <nav class="sidebar" aria-label="Navegacion principal">
   <div class="brand">
     <div class="brand-name">AuditorPro EMA</div>
-    <div class="brand-v">v5.0 · EMA SERVICIOS / AySA</div>
+    <div class="brand-v">v5.1 · EMA SERVICIOS / AySA</div>
   </div>
   <div class="nav">
     <div class="nav-section">
@@ -254,6 +450,10 @@ tbody tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
   </div>
 </nav>
 <main class="main">
+<div class="mob-topbar">
+  <button class="mob-menu-btn" id="mob-menu-btn" type="button" aria-label="Abrir menú">☰</button>
+  <span class="mob-topbar-title">AuditorPro EMA</span>
+</div>
 <div class="page active" id="page-import">
   <div id="restore-banner" style="display:none;background:linear-gradient(90deg,rgba(0,229,160,.08),rgba(0,102,255,.08));border-bottom:1px solid var(--border);padding:14px 28px;align-items:center;gap:16px;flex-wrap:wrap">
     <span style="font-family:var(--mono);font-size:12px;color:var(--text)">📦 <strong>Sesión anterior disponible</strong> <span id="restore-stamp" style="color:var(--text3);margin-left:8px"></span></span>
@@ -2417,6 +2617,42 @@ function showRowDetail(pageKey, ridx) {
 // Banner de restauracion si hay sesion anterior
 checkRestoreOnLoad();
 console.log('AuditorPro EMA v5.0 cargado correctamente.');
+</script>
+
+<script>
+// ── Mobile sidebar toggle ──────────────────────────────────────────────────
+(function() {
+  const btn     = document.getElementById('mob-menu-btn');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mob-overlay');
+  if (!btn || !sidebar || !overlay) return;
+
+  function openSidebar() {
+    sidebar.classList.add('mob-open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('mob-open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  btn.addEventListener('click', openSidebar);
+  overlay.addEventListener('click', closeSidebar);
+
+  // Cerrar al tocar un ítem de nav en móvil
+  sidebar.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // Cerrar con Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSidebar();
+  });
+})();
 </script>
 </body>
 </html>
