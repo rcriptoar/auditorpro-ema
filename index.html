@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditorPro EMA v5.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+:root {
+  --bg:#07090e; --surface:#0f1219; --surface2:#141820; --border:#1a2030; --border2:#212840;
+  --accent:#00e5a0; --blue:#0066ff; --warn:#ff6b35; --danger:#ff2d55; --yellow:#ffd60a;
+  --purple:#b450ff; --ok:#00e5a0;
+  --text:#e8eaf0; --text2:#7a8499; --text3:#5a6478;
+  --mono:'Space Mono',monospace; --sans:'Syne',sans-serif;
+  --r:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+*:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;overflow-x:hidden;min-width:0}
+.brand{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.brand-name{font-size:14px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.brand-v{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:.06em}
+.nav{padding:10px 0;flex:1}
+.nav-section{margin-bottom:2px}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);padding:12px 18px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;transition:all .15s;border-left:2px solid transparent;position:relative;background:transparent;border-top:none;border-right:none;border-bottom:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,229,160,.05)}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:.15s}
+.nav-item.active .nav-dot{background:var(--accent)}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;background:rgba(122,132,153,.15);color:var(--text2)}
+.nav-badge.ok{background:rgba(0,229,160,.12);color:var(--ok)}
+.nav-badge.warn{background:rgba(255,107,53,.12);color:var(--warn)}
+.nav-badge.danger{background:rgba(255,45,85,.15);color:var(--danger)}
+.nav-badge.blue{background:rgba(0,102,255,.12);color:var(--blue)}
+.sb-status{padding:14px 18px;border-top:1px solid var(--border)}
+.sb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-family:var(--mono);font-size:10px;color:var(--text3)}
+.sb-val{color:var(--text2)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.tb-left .tb-title{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.tb-left .tb-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.06em}
+.tb-right{display:flex;gap:8px;align-items:center}
+.page{display:none;padding:24px 28px}
+.page.active{display:block}
+.badge{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:4px;letter-spacing:.03em;white-space:nowrap;display:inline-block}
+.b-ok{background:rgba(0,229,160,.1);color:var(--ok);border:1px solid rgba(0,229,160,.2)}
+.b-warn{background:rgba(255,107,53,.1);color:var(--warn);border:1px solid rgba(255,107,53,.2)}
+.b-danger{background:rgba(255,45,85,.12);color:var(--danger);border:1px solid rgba(255,45,85,.2)}
+.b-blue{background:rgba(0,102,255,.1);color:var(--blue);border:1px solid rgba(0,102,255,.2)}
+.b-yellow{background:rgba(255,214,10,.1);color:var(--yellow);border:1px solid rgba(255,214,10,.2)}
+.b-purple{background:rgba(180,80,255,.1);color:var(--purple);border:1px solid rgba(180,80,255,.2)}
+.b-gray{background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border2)}
+.kpi-grid{display:grid;gap:12px;margin-bottom:22px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px}
+.kpi-card.c-ok::after{background:var(--ok)}
+.kpi-card.c-warn::after{background:var(--warn)}
+.kpi-card.c-danger::after{background:var(--danger)}
+.kpi-card.c-blue::after{background:var(--blue)}
+.kpi-card.c-yellow::after{background:var(--yellow)}
+.kpi-card.c-purple::after{background:var(--purple)}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.kpi-val{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.kpi-val.ok{color:var(--ok)} .kpi-val.warn{color:var(--warn)} .kpi-val.danger{color:var(--danger)}
+.kpi-val.blue{color:var(--blue)} .kpi-val.yellow{color:var(--yellow)} .kpi-val.purple{color:var(--purple)}
+.kpi-sub{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border)}
+.section-title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.section-actions{display:flex;gap:8px;align-items:center}
+.filters{display:flex;gap:8px;padding:12px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;background:var(--bg)}
+.fi{background:var(--surface);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;outline:none;transition:.2s;min-width:140px}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--text3)}
+select.fi{cursor:pointer}
+.fl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.btn{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:7px 13px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);transition:.15s;display:flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#000;border:none;font-size:13px;padding:13px 20px;border-radius:var(--r);width:100%;justify-content:center;font-weight:800}
+.btn-primary:hover{background:#00ffc0;transform:translateY(-1px)}
+.btn-primary:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;border:1px dashed var(--border2);color:var(--text3);font-size:11px}
+.btn-ghost:hover{border-color:var(--danger);color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+thead tr{background:var(--bg)}
+th{text-align:left;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);white-space:nowrap;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+th:hover{color:var(--text2)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
+.td-main{color:var(--text);font-weight:600}
+.td-code{color:var(--blue)}
+.td-odt{color:var(--yellow)}
+.td-serie{color:var(--accent);font-size:11px}
+.td-warn{color:var(--warn);font-weight:700}
+.td-ok{color:var(--ok);font-weight:700}
+.td-danger{color:var(--danger);font-weight:700}
+.score{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.score-4{background:rgba(0,229,160,.12);color:var(--ok)}
+.score-3{background:rgba(255,214,10,.1);color:var(--yellow)}
+.score-2{background:rgba(255,107,53,.1);color:var(--warn)}
+.score-1{background:rgba(255,45,85,.12);color:var(--danger)}
+.score-0{background:rgba(255,255,255,.05);color:var(--text3)}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:3px;text-transform:uppercase;white-space:nowrap}
+.t-ok{background:rgba(0,229,160,.1);color:var(--ok)}
+.t-warn{background:rgba(255,107,53,.1);color:var(--warn)}
+.t-danger{background:rgba(255,45,85,.12);color:var(--danger)}
+.t-blue{background:rgba(0,102,255,.1);color:var(--blue)}
+.t-yellow{background:rgba(255,214,10,.1);color:var(--yellow)}
+.t-purple{background:rgba(180,80,255,.1);color:var(--purple)}
+.t-gray{background:rgba(255,255,255,.05);color:var(--text2)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3);gap:10px;flex-wrap:wrap}
+.pag-btns{display:flex;gap:3px;flex-wrap:wrap}
+.pag-btn{background:var(--border2);border:none;color:var(--text2);font-family:var(--mono);font-size:11px;padding:5px 9px;border-radius:3px;cursor:pointer;transition:.15s}
+.pag-btn:hover{color:var(--accent)}
+.pag-btn.active{background:var(--accent);color:#000}
+.pag-btn:disabled{opacity:.3;cursor:not-allowed}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.uc-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.upload-zone{border:1px dashed var(--border2);border-radius:6px;padding:18px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+.upload-zone:hover{border-color:var(--accent);background:rgba(0,229,160,.02)}
+.upload-zone.drag{border-color:var(--accent);background:rgba(0,229,160,.05)}
+.upload-zone.loaded{border-color:rgba(0,229,160,.4);background:rgba(0,229,160,.03)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.uz-icon{font-size:22px;margin-bottom:6px}
+.uz-text{font-size:12px;color:var(--text3)}
+.uz-text strong{color:var(--text2)}
+.upload-status{margin-top:10px;font-family:var(--mono);font-size:11px;display:none;align-items:center;gap:7px}
+.upload-status.show{display:flex}
+.dot-pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.progress-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;display:none}
+.progress-label{font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:8px;display:flex;justify-content:space-between}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent));border-radius:2px;transition:width .3s}
+.progress-steps{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px}
+.progress-step{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;padding:6px 3px;border:1px solid var(--border);border-radius:3px;transition:.3s}
+.progress-step.done{color:var(--accent);border-color:rgba(0,229,160,.25);background:rgba(0,229,160,.04)}
+.progress-step.running{color:var(--yellow);border-color:rgba(255,214,10,.25);animation:pulse 1s infinite}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;width:92vw;max-width:1000px;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10}
+.modal-title{font-size:15px;font-weight:800}
+.modal-close{background:var(--border2);border:none;color:var(--text2);font-size:16px;width:30px;height:30px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--danger);color:#fff}
+.modal-body{padding:22px;overflow-y:auto}
+.modal-kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font-family:var(--mono);font-size:12px}
+.modal-kv dt{color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-size:10px}
+.modal-kv dd{color:var(--text);word-break:break-word}
+.photo-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(0,102,255,.15);color:var(--blue);border:none;cursor:pointer;font-family:var(--mono);transition:.15s;text-decoration:none}
+.photo-btn:hover{background:rgba(0,102,255,.28)}
+.gps-btn{background:rgba(0,229,160,.12);color:var(--ok)}
+.gps-btn:hover{background:rgba(0,229,160,.24)}
+.anom-block{border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--surface)}
+.anom-head{display:flex;align-items:center;gap:12px;padding:12px 18px;cursor:pointer;border-bottom:1px solid transparent;transition:.15s}
+.anom-head:hover{background:rgba(255,255,255,.02)}
+.anom-head.critical{border-left:3px solid var(--danger)}
+.anom-head.important{border-left:3px solid var(--warn)}
+.anom-head.review{border-left:3px solid var(--yellow)}
+.anom-priority{font-size:11px;font-weight:800;padding:3px 10px;border-radius:4px}
+.p-critical{background:rgba(255,45,85,.12);color:var(--danger)}
+.p-important{background:rgba(255,107,53,.1);color:var(--warn)}
+.p-review{background:rgba(255,214,10,.1);color:var(--yellow)}
+.anom-title{font-size:13px;font-weight:700;flex:1}
+.anom-count{font-family:var(--mono);font-size:18px;font-weight:700}
+.anom-body{display:none;padding:0}
+.anom-block.expanded .anom-body{display:block}
+.anom-block.expanded .anom-head{border-bottom-color:var(--border)}
+.csb{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.csb-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;cursor:pointer;transition:.15s;user-select:none;gap:14px;flex-wrap:wrap}
+.csb-head:hover{background:rgba(255,255,255,.02)}
+.csb-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.csb-id{font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(0,229,160,.08);padding:2px 7px;border-radius:3px}
+.csb-name{font-size:14px;font-weight:700}
+.csb-nums{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.csb-kpi{text-align:right}
+.csb-kpi-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+.csb-kpi-val{font-family:var(--mono);font-size:15px;font-weight:700}
+.csb-divider{width:1px;height:32px;background:var(--border)}
+.smt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+.smt thead tr{background:var(--bg)}
+.smt th{padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+.smt th:first-child,.smt th:nth-child(2){text-align:left}
+.smt td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)}
+.smt td:first-child,.smt td:nth-child(2){text-align:left}
+.smt tr:last-child td{border-bottom:none}
+.smt tr:hover td{background:rgba(255,255,255,.02)}
+.chart-wrap{padding:16px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{font-family:var(--mono);font-size:11px;color:var(--text2);width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:50px;text-align:right}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--text);z-index:2000;transform:translateY(80px);opacity:0;transition:.3s;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.show{transform:none;opacity:1}
+.toast.success{border-color:rgba(0,229,160,.45)}
+.toast.error{border-color:rgba(255,45,85,.45)}
+.toast.warn{border-color:rgba(255,107,53,.4)}
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.empty-desc{font-family:var(--mono);font-size:11px;line-height:1.7}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .3s ease forwards}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar" aria-label="Navegacion principal">
+  <div class="brand">
+    <div class="brand-name">AuditorPro EMA</div>
+    <div class="brand-v">v5.0 · EMA SERVICIOS / AySA</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item active" data-page="import"><span class="nav-dot"></span>Importar</button>
+      <button class="nav-item" data-page="dashboard"><span class="nav-dot"></span>Dashboard</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Trazabilidad</div>
+      <button class="nav-item" data-page="medidores"><span class="nav-dot"></span>Medidores <span class="nav-badge blue" id="nb-med">—</span></button>
+      <button class="nav-item" data-page="odts"><span class="nav-dot"></span>ODTs <span class="nav-badge" id="nb-odts">—</span></button>
+      <button class="nav-item" data-page="patrones"><span class="nav-dot"></span>Patrones <span class="nav-badge" id="nb-pat">—</span></button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Stock</div>
+      <button class="nav-item" data-page="stock"><span class="nav-dot"></span>Cuadrillas</button>
+      <button class="nav-item" data-page="panel"><span class="nav-dot"></span>Pañol</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Auditoría</div>
+      <button class="nav-item" data-page="anomalias"><span class="nav-dot"></span>Anomalías <span class="nav-badge warn" id="nb-anom">—</span></button>
+      <button class="nav-item" data-page="conciliados"><span class="nav-dot"></span>Conciliados <span class="nav-badge ok" id="nb-conc">—</span></button>
+    </div>
+  </div>
+  <div class="sb-status">
+    <div class="sb-row"><span>OBRADOR</span><span class="sb-val" id="sb-ob">—</span></div>
+    <div class="sb-row"><span>PSM-RC</span><span class="sb-val" id="sb-psm">—</span></div>
+    <div class="sb-row"><span>PSM-INF</span><span class="sb-val" id="sb-inf">—</span></div>
+    <div class="sb-row"><span>PSM-AySA</span><span class="sb-val" id="sb-aysa">—</span></div>
+    <div class="sb-row"><span>ESTADO</span><span class="sb-val" id="sb-estado" style="color:var(--text3)">Sin procesar</span></div>
+  </div>
+</nav>
+<main class="main">
+<div class="page active" id="page-import">
+  <div id="restore-banner" style="display:none;background:linear-gradient(90deg,rgba(0,229,160,.08),rgba(0,102,255,.08));border-bottom:1px solid var(--border);padding:14px 28px;align-items:center;gap:16px;flex-wrap:wrap">
+    <span style="font-family:var(--mono);font-size:12px;color:var(--text)">📦 <strong>Sesión anterior disponible</strong> <span id="restore-stamp" style="color:var(--text3);margin-left:8px"></span></span>
+    <button class="btn" type="button" id="btn-restore" style="background:var(--accent);color:#000;border:none">▶ Restaurar resultados procesados</button>
+    <button class="btn btn-ghost" type="button" id="btn-discard">Descartar</button>
+  </div>
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-title">Importar Archivos</div>
+      <div class="tb-sub">OBRADOR (hasta 2 archivos) + PSM (3 fuentes)</div>
+    </div>
+    <div class="tb-right">
+      <span class="badge b-ok">Obrador: fila 1</span>
+      <span class="badge b-blue">PSM-RC: fila 4</span>
+      <span class="badge b-yellow">InformePiezas: fila 1</span>
+      <button class="btn btn-ghost" id="btn-reset" type="button">Reiniciar</button>
+    </div>
+  </div>
+  <div style="padding:24px 28px">
+    <div class="section" style="margin-bottom:16px">
+      <div class="section-head"><span class="section-title" style="color:var(--accent)">SISTEMA OBRADOR — Control Maestro de Stock</span></div>
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="uc-label">Archivo 1 — Obligatorio</div>
+          <label class="upload-zone" id="zone-ob1"><input type="file" accept=".xlsx,.xls,.csv" id="file-ob1" aria-label="Cargar Obrador 1"><div class="uz-icon" aria-hidden="true">📂</div><div class="uz-text"><strong>Seleccionar</strong> o arrastrar<br>Control_obrador_01.xlsx</div></label>
+          <div class="upload-status" id="st-ob1"><div class="dot-pulse"></div><span id="st-ob1-txt"></span></div>
+        </div>
+        <div>
+          <div class="uc-label">Archivo 2 — Opcional</div>
+          <label class="upload-zone" id="zone-ob2" style="border-color:rgba(0,229,160,.15)"><input type="file" accept=".xlsx,.xls,.csv" id="file-ob2" aria-label="Cargar Obrador 2"><div class="uz-icon" aria-hidden="true">📂</div><div class="uz-text"><strong>Seleccionar</strong> o arrastrar<br>Control_obrador_02.xlsx</div></label>
+          <div class="upload-status" id="st-ob2"><div class="dot-pulse"></div><span id="st-ob2-txt"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="section" style="margin-bottom:16px">
+      <div class="section-head"><span class="section-title" style="color:var(--blue)">SISTEMA PSM — 3 Fuentes</span></div>
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div>
+          <div class="uc-label" style="color:var(--blue)">Fuente 1 — Registro Consumos</div>
+          <label class="upload-zone" id="zone-psm"><input type="file" accept=".xlsx,.xls,.csv" id="file-psm" aria-label="Cargar Registro Consumos"><div class="uz-icon" aria-hidden="true">📄</div><div class="uz-text"><strong>Seleccionar</strong><br>registro_consumos_*.xlsx</div></label>
+          <div class="upload-status" id="st-psm"><div class="dot-pulse"></div><span id="st-psm-txt"></span></div>
+        </div>
+        <div>
+          <div class="uc-label" style="color:var(--yellow)">Fuente 2 — InformePiezas (hasta 7)</div>
+          <label class="upload-zone" id="zone-inf"><input type="file" accept=".xlsx,.xls,.csv" id="file-inf" multiple aria-label="Cargar InformePiezas"><div class="uz-icon" aria-hidden="true">📋</div><div class="uz-text"><strong>Seleccionar 1-7 archivos</strong><br>InformePiezas_parte_*.xlsx</div></label>
+          <div class="upload-status" id="st-inf"><div class="dot-pulse"></div><span id="st-inf-txt"></span></div>
+        </div>
+        <div>
+          <div class="uc-label" style="color:var(--purple)">Fuente 3 — Reporte AySA Diario</div>
+          <label class="upload-zone" id="zone-aysa"><input type="file" accept=".xlsx,.xls,.csv" id="file-aysa" aria-label="Cargar Reporte AySA"><div class="uz-icon" aria-hidden="true">🏛️</div><div class="uz-text"><strong>Seleccionar</strong><br>Reporte_AySA_*.xlsx</div></label>
+          <div class="upload-status" id="st-aysa"><div class="dot-pulse"></div><span id="st-aysa-txt"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-wrap" id="progress-wrap" role="status" aria-live="polite">
+      <div class="progress-label"><span id="prog-text">Inicializando...</span><span id="prog-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+      <div class="progress-steps">
+        <div class="progress-step" id="ps1">1. Normalización</div>
+        <div class="progress-step" id="ps2">2. Stock Obrador</div>
+        <div class="progress-step" id="ps3">3. Cruce PSM-RC</div>
+        <div class="progress-step" id="ps4">4. Trazabilidad</div>
+        <div class="progress-step" id="ps5">5. InformePiezas</div>
+        <div class="progress-step" id="ps6">6. Anomalías</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-process" disabled type="button">▶ Ejecutar Auditoría Completa</button>
+  </div>
+</div>
+<div class="page" id="page-dashboard">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Dashboard</div><div class="tb-sub">Estado de salud del sistema — Visión ejecutiva</div></div>
+    <div class="tb-right"><span class="badge b-ok" id="dash-date">—</span></div>
+  </div>
+  <div style="padding:24px 28px">
+    <div class="kpi-label" style="margin-bottom:10px">Estado del stock</div>
+    <div class="kpi-grid" id="kpi-stock" style="grid-template-columns:repeat(6,1fr)"></div>
+    <div class="kpi-label" style="margin-bottom:10px">Conciliación PSM ↔ Obrador</div>
+    <div class="kpi-grid" id="kpi-conc" style="grid-template-columns:repeat(5,1fr)"></div>
+    <div class="kpi-label" style="margin-bottom:10px">Trazabilidad</div>
+    <div class="kpi-grid" id="kpi-traz" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+      <div class="section" style="margin:0"><div class="section-head"><span class="section-title">Semáforo Cuadrillas</span></div><div class="chart-wrap" id="chart-semaforo"></div></div>
+      <div class="section" style="margin:0"><div class="section-head"><span class="section-title">Por Lote</span></div><div class="chart-wrap" id="chart-lotes"></div></div>
+      <div class="section" style="margin:0"><div class="section-head"><span class="section-title">Anomalías por Tipo</span></div><div class="chart-wrap" id="chart-anom-dist"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-head"><span class="section-title">Resumen de Anomalías — Prioridad de Acción</span></div>
+      <div id="dash-anom-summary" style="padding:16px"></div>
+    </div>
+  </div>
+</div>
+<div class="page" id="page-medidores">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Trazabilidad de Medidores</div><div class="tb-sub">Cruce Obrador ↔ PSM-RC ↔ PSM-AySA · Foto · GPS</div></div>
+    <div class="tb-right">
+      <button class="btn" type="button" data-export="medidores">⬇ Exportar</button>
+      <span class="badge b-blue" id="badge-med-total">—</span>
+    </div>
+  </div>
+  <div class="kpi-grid" id="kpi-med-top" style="padding:16px 28px 0;margin-bottom:0;grid-template-columns:repeat(6,1fr)"></div>
+  <div class="filters" data-filter-group="med">
+    <span class="fl">Filtrar:</span>
+    <input class="fi" placeholder="Serie medidor..." id="f-med-serie">
+    <input class="fi" placeholder="ODT..." id="f-med-odt">
+    <input class="fi" placeholder="Cuadrilla / Legajo..." id="f-med-cuad">
+    <select class="fi" id="f-med-score">
+      <option value="">Todos los scores</option>
+      <option value="4">4/4 — Trazabilidad completa</option>
+      <option value="3">3/4 — Parcial</option>
+      <option value="2">2/4 — Incompleta</option>
+      <option value="1">1/4 — Solo Obrador</option>
+    </select>
+    <select class="fi" id="f-med-estado">
+      <option value="">Todos los estados</option>
+      <option value="ok">✅ Trazabilidad OK</option>
+      <option value="sin_psm">❌ Sin declaración PSM</option>
+      <option value="psm_sin_egreso_ob">🟠 PSM declarado — sin egreso Obrador</option>
+      <option value="no_ob">⚠ Solo en PSM (sin ingreso OB)</option>
+      <option value="fantasma_aysa">🔴 Declarado AySA sin ingreso OB</option>
+      <option value="desvio_odt">⚠ Desvío ODT</option>
+      <option value="desvio_cuad">⚠ Desvío Cuadrilla</option>
+      <option value="sin_foto">📷 Sin foto</option>
+      <option value="en_cuadrilla">📦 En Cuadrilla</option>
+      <option value="en_panel">🏭 En Pañol</option>
+    </select>
+    <select class="fi" id="f-med-lote"><option value="">Todos los lotes</option></select>
+  </div>
+  <div class="table-wrap" id="tbl-medidores"></div>
+  <div class="pagination" id="pag-medidores"></div>
+</div>
+<div class="page" id="page-odts">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Vista de ODTs</div><div class="tb-sub">Conciliación completa por orden de trabajo — 4 fuentes</div></div>
+    <div class="tb-right">
+      <button class="btn" type="button" data-export="odts">⬇ Exportar</button>
+      <span class="badge b-blue" id="badge-odts-total">—</span>
+    </div>
+  </div>
+  <div class="filters" data-filter-group="odts">
+    <span class="fl">Filtrar:</span>
+    <input class="fi" placeholder="ODT..." id="f-odt-num">
+    <input class="fi" placeholder="Cuadrilla / Legajo..." id="f-odt-cuad">
+    <select class="fi" id="f-odt-estado">
+      <option value="">Todos los estados</option>
+      <option value="ok">✅ Conciliada completa</option>
+      <option value="parcial">🟡 Parcialmente conciliada</option>
+      <option value="faltante">🔴 Sin impacto Obrador</option>
+      <option value="fantasma">⚠ R11 sin ningún registro</option>
+    </select>
+    <select class="fi" id="f-odt-lote"><option value="">Todos los lotes</option></select>
+  </div>
+  <div class="table-wrap" id="tbl-odts"></div>
+  <div class="pagination" id="pag-odts"></div>
+</div>
+<div class="page" id="page-stock">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Stock por Cuadrilla</div><div class="tb-sub">Actual = Enviado + Traslados − Devuelto − Consumido OB · Proyectado = Actual − Pendiente PSM</div></div>
+    <div class="tb-right"><button class="btn" type="button" data-export="stock">⬇ Exportar</button></div>
+  </div>
+  <div class="kpi-grid" id="kpi-stock-top" style="padding:16px 28px 0;margin-bottom:0;grid-template-columns:repeat(5,1fr)"></div>
+  <div class="filters" data-filter-group="stock">
+    <span class="fl">Filtrar:</span>
+    <input class="fi" placeholder="Cuadrilla / Legajo..." id="f-stock-cuad">
+    <input class="fi" placeholder="Código o material..." id="f-stock-mat">
+    <select class="fi" id="f-stock-est">
+      <option value="">Todas</option>
+      <option value="neg">Stock actual negativo ⚠</option>
+      <option value="proy-neg">Stock proyectado negativo ⚠</option>
+      <option value="pendiente">Con pendiente PSM</option>
+    </select>
+    <select class="fi" id="f-stock-ord">
+      <option value="proy-desc">Ordenar: Proyectado ↓</option>
+      <option value="pend-desc">Ordenar: Pendiente ↓</option>
+      <option value="cuad-az">Cuadrilla A-Z</option>
+    </select>
+  </div>
+  <div id="stock-wrap" style="padding:0 28px 28px"></div>
+</div>
+<div class="page" id="page-panel">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Panel Pañol</div><div class="tb-sub">Stock central — Ingreso proveedor − Envíos − Traslados</div></div>
+    <div class="tb-right"><button class="btn" type="button" data-export="panel">⬇ Exportar</button></div>
+  </div>
+  <div class="filters" data-filter-group="panel">
+    <input class="fi" placeholder="Código o descripción..." id="f-panel-cod">
+    <select class="fi" id="f-panel-est">
+      <option value="">Todos</option>
+      <option value="bajo">Stock bajo o en cero</option>
+      <option value="neg">Stock negativo ⚠</option>
+    </select>
+  </div>
+  <div class="table-wrap" id="tbl-panel"></div>
+  <div class="pagination" id="pag-panel"></div>
+</div>
+<div class="page" id="page-anomalias">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Anomalías Priorizadas</div><div class="tb-sub">Acción requerida · ordenadas por impacto en stock y trazabilidad</div></div>
+    <div class="tb-right"><button class="btn" type="button" data-export="anomalias">⬇ Exportar Todo</button></div>
+  </div>
+  <div style="padding:24px 28px" id="anom-page-content"></div>
+</div>
+<div class="page" id="page-conciliados">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Registros Conciliados</div><div class="tb-sub">Coincidencia exacta PSM ↔ Obrador (ODT + Código + Cantidad)</div></div>
+    <div class="tb-right">
+      <button class="btn" type="button" data-export="conciliados">⬇ Exportar</button>
+      <span class="badge b-ok" id="badge-conc-total">—</span>
+    </div>
+  </div>
+  <div class="filters" data-filter-group="conc">
+    <input class="fi" placeholder="ODT..." id="f-conc-odt">
+    <input class="fi" placeholder="Cuadrilla / Legajo..." id="f-conc-cuad">
+    <input class="fi" placeholder="Código..." id="f-conc-cod">
+  </div>
+  <div class="table-wrap" id="tbl-conciliados"></div>
+  <div class="pagination" id="pag-conciliados"></div>
+</div>
+<div class="page" id="page-patrones">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title">Patrones de Instalación</div><div class="tb-sub">Clasificación automática de ODTs por combinación de materiales consumidos en Obrador</div></div>
+    <div class="tb-right">
+      <button class="btn" type="button" data-export="patrones">⬇ Exportar</button>
+      <span class="badge b-blue" id="badge-pat-total">—</span>
+    </div>
+  </div>
+  <div class="kpi-grid" id="kpi-pat-top" style="padding:16px 28px 0;margin-bottom:0;grid-template-columns:repeat(5,1fr)"></div>
+  <div style="padding:16px 28px 0">
+    <div class="section" style="margin-bottom:16px">
+      <div class="section-head"><span class="section-title">Patrones detectados — Top 20</span><span class="section-actions" style="font-family:var(--mono);font-size:10px;color:var(--text3)">Renombrar para asignar nombre · Click en "Ver ODTs" para filtrar abajo</span></div>
+      <div class="table-wrap" id="tbl-patrones"></div>
+    </div>
+  </div>
+  <div class="filters" data-filter-group="pat">
+    <span class="fl">Filtrar ODTs:</span>
+    <input class="fi" placeholder="ODT..." id="f-pat-odt">
+    <input class="fi" placeholder="Cuadrilla / Legajo..." id="f-pat-cuad">
+    <select class="fi" id="f-pat-name"><option value="">Todos los patrones</option></select>
+    <select class="fi" id="f-pat-estado"><option value="">Todos los estados</option></select>
+  </div>
+  <div class="table-wrap" id="tbl-patrones-odts"></div>
+  <div class="pagination" id="pag-patrones"></div>
+</div>
+</main>
+</div>
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Detalle</span>
+      <button class="modal-close" id="modal-close-btn" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+// ============================================================
+//  AuditorPro EMA v4.1 — fixed build
+//  Cambios respecto de v4.0:
+//   • Sintaxis: bloque "Inconsistencias a Verificar" y funcion anomTableGeneric restaurados
+//   • Scope: seriesIngresadas/remitosIngreso movidos a state global S
+//   • Paginacion: ya no se resetea al pasar de pagina (solo al filtrar)
+//   • Seguridad XSS: helper esc() aplicado a TODO contenido proveniente de Excel
+//   • Fechas: parser robusto para DD/MM/YYYY y YYYY-MM-DD
+//   • Pendiente: prorrateado entre multiples cuadrillas (no doble conteo)
+//   • Try/catch en runAudit y en cada carga de archivo
+//   • Teclado: Escape cierra el modal, focus visible
+//   • Navegacion via event delegation (no onclick inline)
+//   • Soporte CSV ademas de XLSX
+// ============================================================
+
+// ---------- CONFIG ----------
+const COD_MEDIDOR = '72003015';
+const PAGE_SIZE = 100;
+const ESTADOS_TERMINADO = new Set(['R11','R20','08 - FIN','10 - FIN','08-FIN','10-FIN']);
+const ESTADOS_CANCELADO = new Set(['R-BAJA DE ODT','baja de recorrdio','BAJA DE ODT','BAJA DE RECORRIDO']);
+const ESTADOS_R11R20 = new Set(['R11','R20']);
+const PATRON_NUCLEO = ['72003015','72002015','70008001','50600001'];
+const NUCLEO_DESC = {'72003015':'Medidor','72002015':'Precinto','70008001':'Caja','50600001':'Junta'};
+const AYSA_MAT_MAP = {
+  'Juntas':         '50600001',
+  'Precinto':       '72002015',
+  'Caja':           '70008001',
+  'Medidor (Cant)': '72003015',
+  '050-048-115':    '50048115',
+  '050-056-131':    '50056131',
+  '050-056-014':    '50056014',
+  '050-056-142':    '50056142',
+  '050-048-030':    '50048030',
+  '050-056-147':    '50056147',
+  '050-056-056':    '50056056',
+  '050-048-023':    '50048023',
+  '050-150-025':    '50150025',
+  '050-056-146':    '50056146',
+};
+
+// ---------- STATE ----------
+const S = {
+  raw: { ob1:null, ob2:null, psm:null, inf:[], aysa:null },
+  processed: false,
+  obrNorm: [], psmNorm: [], infNorm: [], aysaNorm: [],
+  medidores: [], odtsMap: {},
+  conciliados: [], faltantes: [], excesos: [], errores: [],
+  desviosAysa: [], duplicadosOb: [], patronIncompleto: [],
+  psmInterno: [], multiCuadrilla: [], desviosCuadrilla: [],
+  stockCuadrillas: {}, stockPanel: {},
+  seriesIngresadas: new Set(),
+  remitosIngreso: new Set(),
+  patrones: [],
+  patronOdtMap: {},
+  pages: { medidores:1, odts:1, panel:1, conciliados:1, patrones:1 },
+  fotosStore: new Map(),
+  fotosCounter: 0,
+};
+const STORAGE_KEY = 'auditorpro:state:v1';
+const PATTERNS_NAMES_KEY = 'auditorpro:patternNames:v1';
+
+// ---------- UTILS ----------
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function safeUrl(u) {
+  if (!u) return '';
+  const s = String(u).trim();
+  if (/^(https?:|mailto:|tel:)/i.test(s)) return s;
+  return '';
+}
+function $(id) { return document.getElementById(id); }
+function set(id, val) { const el=$(id); if(el) el.textContent=val; }
+function trunc(s, n) { const v = (s===null||s===undefined)?'':String(s); return v.length>n?v.substring(0,n)+'…':(v||'—'); }
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function emptyState(t, d) { return `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">${esc(t)}</div><div class="empty-desc">${esc(d)}</div></div>`; }
+function setProgress(pct, text, stepId) {
+  $('prog-fill').style.width = pct+'%';
+  $('prog-text').textContent = text;
+  $('prog-pct').textContent = pct+'%';
+  if (stepId) {
+    document.querySelectorAll('.progress-step').forEach(s => {
+      const sNum = parseInt(s.id.replace('ps',''),10);
+      const tNum = parseInt(stepId.replace('ps',''),10);
+      s.className = 'progress-step'+(sNum<tNum?' done':sNum===tNum?' running':'');
+    });
+  }
+}
+let toastTimer = null;
+function showToast(msg, type='success') {
+  const t = $('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className='toast'; }, 4000);
+}
+// ---------- safeDownload (no navega el browser) ----------
+function safeDownload(wb, filename) {
+  const arr = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+  const blob = new Blob([arr], { type:'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.rel = 'noopener'; a.style.display = 'none';
+  document.body.appendChild(a);
+  try { a.click(); } finally {
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+  }
+}
+
+// ---------- Persistencia local ----------
+function saveStateLocal() {
+  try {
+    const snap = {
+      ts: new Date().toISOString(),
+      medidores: S.medidores, odtsMap: S.odtsMap,
+      conciliados: S.conciliados, faltantes: S.faltantes, excesos: S.excesos,
+      errores: S.errores, desviosAysa: S.desviosAysa, duplicadosOb: S.duplicadosOb,
+      patronIncompleto: S.patronIncompleto,
+      psmInterno: S.psmInterno, multiCuadrilla: S.multiCuadrilla, desviosCuadrilla: S.desviosCuadrilla,
+      stockCuadrillas: S.stockCuadrillas, stockPanel: S.stockPanel,
+      seriesIngresadas: [...S.seriesIngresadas], remitosIngreso: [...S.remitosIngreso],
+      patrones: S.patrones, patronOdtMap: S.patronOdtMap,
+    };
+    const json = JSON.stringify(snap);
+    localStorage.setItem(STORAGE_KEY, json);
+    return json.length;
+  } catch(err) {
+    console.warn('No se pudo guardar estado:', err);
+    showToast('No se pudo guardar la sesión (espacio insuficiente).','warn');
+    return 0;
+  }
+}
+function loadStateLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(err) { return null; }
+}
+function clearStateLocal() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(_){}
+}
+function restoreFromSnap(snap) {
+  S.medidores = snap.medidores||[];
+  S.odtsMap = snap.odtsMap||{};
+  S.conciliados = snap.conciliados||[];
+  S.faltantes = snap.faltantes||[];
+  S.excesos = snap.excesos||[];
+  S.errores = snap.errores||[];
+  S.desviosAysa = snap.desviosAysa||[];
+  S.duplicadosOb = snap.duplicadosOb||[];
+  S.patronIncompleto = snap.patronIncompleto||[];
+  S.psmInterno = snap.psmInterno||[];
+  S.multiCuadrilla = snap.multiCuadrilla||[];
+  S.desviosCuadrilla = snap.desviosCuadrilla||[];
+  S.stockCuadrillas = snap.stockCuadrillas||{};
+  S.stockPanel = snap.stockPanel||{};
+  S.seriesIngresadas = new Set(snap.seriesIngresadas||[]);
+  S.remitosIngreso = new Set(snap.remitosIngreso||[]);
+  S.patrones = snap.patrones||[];
+  S.patronOdtMap = snap.patronOdtMap||{};
+  S.processed = true;
+  set('sb-estado','Sesión restaurada ✓');
+  $('sb-estado').style.color='var(--ok)';
+  const lotes = [...new Set(S.medidores.map(m=>m.lote).filter(Boolean))].sort();
+  ['f-med-lote','f-odt-lote'].forEach(id => {
+    const sel = $(id); if (!sel) return;
+    while (sel.options.length>1) sel.remove(1);
+    lotes.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; sel.appendChild(o); });
+  });
+  populatePatternFilters();
+  const totAnom = S.faltantes.length + S.excesos.length + S.errores.length + S.desviosAysa.length + S.duplicadosOb.length + S.patronIncompleto.length + S.psmInterno.length + S.multiCuadrilla.length + S.desviosCuadrilla.length;
+  set('nb-anom', totAnom.toLocaleString());
+  set('nb-conc', S.conciliados.length.toLocaleString());
+  set('nb-med', S.medidores.length.toLocaleString());
+  set('nb-odts', Object.keys(S.odtsMap).length.toLocaleString());
+  set('nb-pat', S.patrones.length.toLocaleString());
+  set('badge-conc-total', S.conciliados.length.toLocaleString());
+  set('badge-med-total', S.medidores.length.toLocaleString());
+  set('badge-odts-total', Object.keys(S.odtsMap).length.toLocaleString());
+  set('badge-pat-total', S.patrones.length.toLocaleString());
+  updateDashboard(); renderMedidores(); renderOdts(); renderStock(); renderPanel(); renderAnomalias(); renderConciliados(); renderPatrones();
+  goPage('dashboard');
+  showToast('Sesión restaurada ('+(snap.ts?.split('T')[0]||'')+')','success');
+}
+function checkRestoreOnLoad() {
+  const snap = loadStateLocal();
+  const banner = $('restore-banner');
+  if (!snap || !snap.medidores?.length) { if (banner) banner.style.display='none'; return; }
+  if (banner) {
+    banner.style.display = 'flex';
+    const dt = snap.ts ? new Date(snap.ts) : null;
+    set('restore-stamp', dt ? 'Procesado el ' + dt.toLocaleString('es-AR') + ' · ' + snap.medidores.length.toLocaleString() + ' medidores · ' + (snap.conciliados?.length||0).toLocaleString() + ' conciliados' : '');
+  }
+}
+function getPatternNames() {
+  try { return JSON.parse(localStorage.getItem(PATTERNS_NAMES_KEY)||'{}'); } catch(_) { return {}; }
+}
+function savePatternName(sig, nombre) {
+  const names = getPatternNames();
+  if (nombre) names[sig] = nombre; else delete names[sig];
+  try { localStorage.setItem(PATTERNS_NAMES_KEY, JSON.stringify(names)); } catch(_){}
+}
+function populatePatternFilters() {
+  const sel = $('f-pat-name');
+  if (!sel) return;
+  while (sel.options.length>1) sel.remove(1);
+  const names = getPatternNames();
+  S.patrones.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.sig;
+    o.textContent = (names[p.sig] || ('Patrón ' + p.sig.substring(0,8))) + ' (' + p.count + ')';
+    sel.appendChild(o);
+  });
+  const selE = $('f-pat-estado');
+  if (selE) {
+    while (selE.options.length>1) selE.remove(1);
+    const estados = [...new Set(Object.values(S.odtsMap).map(o=>o.estadoAysa).filter(Boolean))].sort();
+    estados.forEach(e => { const o=document.createElement('option'); o.value=e; o.textContent=e; selE.appendChild(o); });
+  }
+}
+
+function parseDateKey(fecha, hora) {
+  if (!fecha) return '';
+  const f = String(fecha).trim();
+  const h = String(hora||'').trim().padStart(8,'0');
+  let iso = f;
+  let m;
+  if ((m = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/))) {
+    const d=m[1].padStart(2,'0'), mo=m[2].padStart(2,'0');
+    const y=m[3].length===2 ? '20'+m[3] : m[3];
+    iso = `${y}-${mo}-${d}`;
+  } else if ((m = f.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})/))) {
+    const d=m[1].padStart(2,'0'), mo=m[2].padStart(2,'0');
+    const y=m[3].length===2 ? '20'+m[3] : m[3];
+    iso = `${y}-${mo}-${d}`;
+  }
+  return `${iso}|${h}`;
+}
+
+// ---------- NORMALIZERS ----------
+const normStr = v => String(v??'').trim().toUpperCase().replace(/^0+/,'') || '';
+const normSerie = v => { const s=String(v??'').trim().toUpperCase().replace(/\.0$/,'').replace(/^0+/,''); return ['NAN','S/D','SD','NONE','','0','N/A','NA','-','NULL','#N/A'].includes(s)?'':s; };
+const normODT = v => String(v??'').trim();
+const normLegajo = v => String(v??'').replace(/\.0$/,'').trim().replace(/^0+/,'');
+const normQty = v => { const n=parseFloat(v); return isFinite(n)?n:0; };
+const isNumRemito = v => /^\d+$/.test(String(v??'').trim());
+
+// ---------- NAVIGATION ----------
+function goPage(id) {
+  if (!S.processed && id !== 'import') { showToast('Primero ejecute la auditoría.','error'); return; }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const p = $('page-'+id); if (p) p.classList.add('active');
+  const nav = document.querySelector(`.nav-item[data-page="${id}"]`);
+  if (nav) nav.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ---------- FILE LOADING ----------
+function loadFile(type, file) {
+  if (!file) return;
+  const stEl = $('st-'+type);
+  const stTxt = $('st-'+type+'-txt');
+  stEl.classList.add('show');
+  stTxt.textContent = 'Leyendo ' + file.name + '...';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type:'binary', cellDates:false });
+      if (!wb.SheetNames.length) throw new Error('Libro vacio');
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const headerRow = type === 'psm' ? 3 : 0;
+      const data = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+      if (data.length <= headerRow) throw new Error('Archivo sin filas de datos en la fila esperada');
+      const headers = data[headerRow].map(h => String(h??'').trim());
+      const rows = data.slice(headerRow+1).filter(r => r.some(c => c !== ''))
+        .map(r => { const o={}; headers.forEach((h,i) => o[h]=r[i]??''); return o; });
+      S.raw[type] = rows;
+      stTxt.textContent = `✓ ${file.name} — ${rows.length.toLocaleString()} regs`;
+      const zone = $('zone-'+type); if (zone) zone.classList.add('loaded');
+      updateSbStatus(); checkReady();
+    } catch(err) {
+      stTxt.textContent = '✗ Error: '+err.message;
+      showToast('Error leyendo '+file.name+': '+err.message,'error');
+    }
+  };
+  reader.onerror = () => { stTxt.textContent='✗ Error de lectura'; showToast('No se pudo leer el archivo','error'); };
+  reader.readAsBinaryString(file);
+}
+function loadFileMulti(type, files) {
+  files = Array.from(files||[]);
+  if (!files.length) return;
+  const stEl = $('st-'+type); const stTxt = $('st-'+type+'-txt');
+  stEl.classList.add('show');
+  stTxt.textContent = `Leyendo ${files.length} archivos...`;
+  S.raw[type] = [];
+  let done = 0; let errs = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'binary', cellDates:false });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+        const headers = data[0].map(h => String(h??'').trim());
+        const rows = data.slice(1).filter(r => r.some(c => c !== ''))
+          .map(r => { const o={}; headers.forEach((h,i) => o[h]=r[i]??''); return o; });
+        S.raw[type] = S.raw[type].concat(rows);
+      } catch(err) { errs++; console.warn('Error en', file.name, err); }
+      done++;
+      if (done === files.length) {
+        stTxt.textContent = `✓ ${files.length} archivos — ${S.raw[type].length.toLocaleString()} regs` + (errs?` (${errs} con error)`:'');
+        const zone = $('zone-'+type); if (zone) zone.classList.add('loaded');
+        updateSbStatus(); checkReady();
+      }
+    };
+    reader.readAsBinaryString(file);
+  });
+}
+function updateSbStatus() {
+  const ob = (S.raw.ob1?.length||0)+(S.raw.ob2?.length||0);
+  set('sb-ob', ob ? ob.toLocaleString()+' regs' : '—');
+  set('sb-psm', S.raw.psm ? S.raw.psm.length.toLocaleString()+' regs' : '—');
+  set('sb-inf', S.raw.inf?.length ? S.raw.inf.length.toLocaleString()+' regs' : '—');
+  set('sb-aysa', S.raw.aysa ? S.raw.aysa.length.toLocaleString()+' regs' : '—');
+}
+function checkReady() {
+  $('btn-process').disabled = !(S.raw.ob1 && S.raw.psm);
+}
+function resetAll() {
+  if (!confirm('¿Reiniciar todos los archivos cargados y resultados? Esta acción no se puede deshacer.')) return;
+  S.raw = { ob1:null, ob2:null, psm:null, inf:[], aysa:null };
+  S.processed = false;
+  S.medidores = []; S.odtsMap = {}; S.conciliados = []; S.faltantes = []; S.excesos = []; S.errores = [];
+  S.psmInterno = []; S.multiCuadrilla = []; S.desviosCuadrilla = [];
+  S.desviosAysa = []; S.duplicadosOb = []; S.patronIncompleto = [];
+  S.patrones = []; S.patronOdtMap = {};
+  S.seriesIngresadas = new Set(); S.remitosIngreso = new Set();
+  clearStateLocal();
+  const banner = $('restore-banner'); if (banner) banner.style.display = 'none';
+  ['ob1','ob2','psm','inf','aysa'].forEach(t => {
+    const st = $('st-'+t); if (st) st.classList.remove('show');
+    const zone = $('zone-'+t); if (zone) zone.classList.remove('loaded');
+    const inp = $('file-'+t); if (inp) inp.value = '';
+  });
+  updateSbStatus(); checkReady();
+  set('sb-estado','Sin procesar');
+  $('sb-estado').style.color='var(--text3)';
+  goPage('import');
+  showToast('Estado reiniciado.','warn');
+}
+
+// ---------- AUDIT ENGINE ----------
+async function runAudit() {
+  try {
+    await runAuditInternal();
+  } catch(err) {
+    console.error('Error en auditoria:', err);
+    showToast('Error en auditoría: '+err.message,'error');
+    $('progress-wrap').style.display = 'none';
+  }
+}
+async function runAuditInternal() {
+  $('progress-wrap').style.display = 'block';
+  setProgress(0,'Normalizando Obrador...','ps1'); await sleep(20);
+
+  // ---- 1. NORMALIZE OBRADOR ----
+  let obRaw = [...(S.raw.ob1||[])];
+  if (S.raw.ob2?.length) {
+    obRaw = obRaw.concat(S.raw.ob2);
+    const seen = new Set();
+    obRaw = obRaw.filter(r => {
+      const k = `${r.Remito}|${r.Codigo??r['Código']??''}|${r.Cuadrilla}|${r.Movimiento}|${r.Cantidad}|${r.Serie??''}`;
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
+  }
+  S.obrNorm = obRaw.map(r => {
+    const cuadRaw = String(r.Cuadrilla??'').trim();
+    const parts = cuadRaw.split('/');
+    const legajo = normLegajo(parts[0]);
+    const nombre = parts.slice(1).join('/').trim();
+    const mov = String(r.Movimiento??'').trim().toUpperCase();
+    return {
+      fecha: String(r.Fecha??'').trim(),
+      movimiento: mov,
+      ubicacion: String(r['Ubicación']??r.Ubicacion??'').trim(),
+      legajo, cuadNombre: nombre, cuadRaw,
+      codigo: normStr(r.Codigo??r['Código']??''),
+      serie: normSerie(r.Serie??''),
+      desc: String(r.Descripcion??r['Descripción']??'').trim(),
+      qty: normQty(r.Cantidad),
+      odt: normODT(r.ODT??''),
+      remito: String(r.Remito??'').trim(),
+    };
+  });
+  setProgress(15,'Normalizando PSM - Registro Consumos...','ps3'); await sleep(20);
+
+  // ---- 2. NORMALIZE PSM-RC ----
+  S.psmNorm = (S.raw.psm||[]).map(p => ({
+    codigo: normStr(p['Código Producto']??p['Codigo']??''),
+    desc: String(p['Descripción Producto']??p['Descripcion']??'').trim(),
+    qty: normQty(p.Cantidad),
+    serie: normSerie(p.Series??p.Serie??''),
+    motivo: String(p.Motivo??'').trim(),
+    odt: normODT(p.ODT??''),
+    legajo: normLegajo(p.Cuadrilla??''),
+    cuadNombre: String(p['Descripción Cuadrilla']??'').trim(),
+    remito: String(p.Remito??'').trim(),
+    fecha: String(p['Fecha Consumo']??'').trim(),
+    sessionId: String(p['Session ID']??p.Motivo??'').trim(),
+  }));
+  setProgress(30,'Normalizando PSM - InformePiezas...','ps5'); await sleep(20);
+
+  // ---- 3. NORMALIZE InformePiezas ----
+  const infRaw = S.raw.inf||[];
+  const infAll = infRaw.map(r => ({
+    odt: normODT(r['Codigo de Barras']??''),
+    legajo: normLegajo(r.Legajo??''),
+    nombre: String(r.Nombre??'').trim(),
+    estado: String(r.Estado??'').trim(),
+    lote: String(r.Lote??'').trim(),
+    titular: String(r['Nombre del Titular']??'').trim(),
+    direccion: String(r['Dirección']??r.Direccion??'').trim(),
+    localidad: String(r.Localidad??'').trim(),
+    fecha: String(r.Fecha??'').trim(),
+    hora: String(r.Hora??'').trim(),
+    foto: String(r.Foto??'').trim(),
+    gps: String(r['Ubicación en Mapa']??'').trim(),
+    fotoOk: String(r.Foto??'').startsWith('http'),
+    gpsOk: String(r['Ubicación en Mapa']??'').includes('maps?q=') && !String(r['Ubicación en Mapa']??'').includes('q=0,0'),
+    terminado: ESTADOS_TERMINADO.has(String(r.Estado??'').trim()),
+    cancelado: ESTADOS_CANCELADO.has(String(r.Estado??'').trim()),
+  }));
+  const infByOdt = {};
+  infAll.forEach(r => {
+    if (!r.odt) return;
+    if (!infByOdt[r.odt]) infByOdt[r.odt] = { ...r, fotos: [] };
+    const e = infByOdt[r.odt];
+    if (r.fotoOk && !e.fotos.includes(r.foto)) e.fotos.push(r.foto);
+    if (r.gpsOk && !e.gpsOk) { e.gps = r.gps; e.gpsOk = true; }
+    const rKey = parseDateKey(r.fecha, r.hora);
+    const eKey = parseDateKey(e.fecha, e.hora);
+    if (rKey > eKey) {
+      e.estado = r.estado;
+      e.fecha = r.fecha; e.hora = r.hora;
+      e.terminado = r.terminado;
+      e.cancelado = r.cancelado;
+      if (r.fotoOk) e.foto = r.foto;
+    }
+  });
+  S.infNorm = Object.values(infByOdt);
+
+  // ---- 4. NORMALIZE AySA ----
+  const aysaRaw = S.raw.aysa||[];
+  const aysaAll = aysaRaw.map(r => {
+    const matsAysa = {};
+    Object.entries(AYSA_MAT_MAP).forEach(([col, cod]) => {
+      const v = r[col];
+      const n = parseFloat(String(v??'').replace('-','0'))||0;
+      if (n > 0) matsAysa[cod] = n;
+    });
+    return {
+      odt: normODT(r['Nro ODT']??''),
+      estado: String(r.Estado??'').trim(),
+      medidor: normSerie(r.Medidor??''),
+      precinto: String(r['Número de Precinto']??'').replace(/\.0$/,'').trim(),
+      oficial: String(r['Oficial/Ayudante']??'').trim(),
+      lote: String(r.Lote??'').trim(),
+      fecha: String(r['Fecha Asignación']??r['Fecha Asignacion']??'').trim(),
+      terminado: ESTADOS_TERMINADO.has(String(r.Estado??'').trim()),
+      cancelado: ESTADOS_CANCELADO.has(String(r.Estado??'').trim()),
+      mats: matsAysa,
+    };
+  });
+  const aysaByOdt = {};
+  aysaAll.forEach(r => {
+    if (!r.odt) return;
+    const cur = aysaByOdt[r.odt];
+    if (!cur) { aysaByOdt[r.odt] = r; return; }
+    const curKey = parseDateKey(cur.fecha,'');
+    const rKey = parseDateKey(r.fecha,'');
+    if ((r.terminado && !cur.terminado) || rKey > curKey) aysaByOdt[r.odt] = r;
+  });
+  S.aysaNorm = Object.values(aysaByOdt);
+  setProgress(45,'Calculando stock y ecuación de inventario...','ps2'); await sleep(20);
+
+  // ---- 5. STOCK CALCULATION ----
+  const crewStock = {};
+  S.obrNorm.forEach(o => {
+    if (!o.legajo || o.legajo === 'S') return;
+    if (!crewStock[o.legajo]) crewStock[o.legajo] = { legajo:o.legajo, nombre:o.cuadNombre, mats:{}, totE:0, totT:0, totC:0, totD:0 };
+    const cs = crewStock[o.legajo];
+    if (!cs.nombre && o.cuadNombre) cs.nombre = o.cuadNombre;
+    if (!cs.mats[o.codigo]) cs.mats[o.codigo] = { codigo:o.codigo, desc:o.desc, e:0, t:0, c:0, d:0, pend:0 };
+    const m = cs.mats[o.codigo];
+    if (!m.desc && o.desc) m.desc = o.desc;
+    const mov = o.movimiento;
+    if (mov.includes('ENVIOS A OBRA')) { m.e+=o.qty; cs.totE+=o.qty; }
+    else if (mov.includes('CONSUMO EN OBRA')) { m.c+=o.qty; cs.totC+=o.qty; }
+    else if (mov.includes('DEVOLUCIONES DE OBRA')) { m.d+=o.qty; cs.totD+=o.qty; }
+    else if (mov.includes('TRASLADO')) { m.t+=o.qty; cs.totT+=o.qty; }
+  });
+
+  // Panel Pañol
+  const panolStock = {};
+  S.obrNorm.forEach(o => {
+    if (!panolStock[o.codigo]) panolStock[o.codigo] = { codigo:o.codigo, desc:o.desc, ing:0, env:0, tra:0 };
+    const p = panolStock[o.codigo];
+    if (!p.desc && o.desc) p.desc = o.desc;
+    const mov = o.movimiento;
+    if (mov.includes('INGRESO DE PROVEEDOR')) p.ing+=o.qty;
+    else if (mov.includes('ENVIOS A OBRA')) p.env+=o.qty;
+    else if (mov.includes('TRASLADO')) p.tra+=o.qty;
+  });
+  Object.values(panolStock).forEach(p => { p.stock = p.ing - p.env - p.tra; });
+  S.stockPanel = panolStock;
+  setProgress(60,'Cruzando PSM ↔ Obrador...','ps3'); await sleep(20);
+
+  // ---- 6. RECONCILIATION ENGINE v5 ----
+  const obConsumos = S.obrNorm.filter(o => o.movimiento.includes('CONSUMO EN OBRA'));
+  const psmValidos = S.psmNorm.filter(p => isNumRemito(p.remito) && p.odt && p.codigo);
+  const psmErrors  = S.psmNorm.filter(p => !isNumRemito(p.remito));
+
+  // Agregar por ODT|CODIGO (sin serie — el cruce de series es capa separada)
+  const psmAgg = {}, obAgg = {};
+  psmValidos.forEach(p => {
+    const key = `${p.odt}|${p.codigo}`;
+    if (!psmAgg[key]) psmAgg[key] = { qty:0, rows:[], odt:p.odt, codigo:p.codigo, legajos:new Set(), cuads:new Set(), series:new Set(), desc:p.desc };
+    psmAgg[key].qty += p.qty; psmAgg[key].rows.push(p);
+    psmAgg[key].legajos.add(p.legajo); psmAgg[key].cuads.add(p.cuadNombre||'');
+    if (p.serie) psmAgg[key].series.add(p.serie);
+  });
+  obConsumos.forEach(o => {
+    const key = `${o.odt}|${o.codigo}`;
+    if (!obAgg[key]) obAgg[key] = { qty:0, rows:[], odt:o.odt, codigo:o.codigo, legajos:new Set(), cuads:new Set(), series:new Set(), desc:o.desc };
+    obAgg[key].qty += o.qty; obAgg[key].rows.push(o);
+    obAgg[key].legajos.add(o.legajo); obAgg[key].cuads.add(o.cuadNombre||'');
+    if (o.serie) obAgg[key].series.add(o.serie);
+  });
+
+  const odtsInOb = new Set(obConsumos.map(o => o.odt));
+  const allKeys  = new Set([...Object.keys(psmAgg), ...Object.keys(obAgg)]);
+  // Lookup planos por ODT|COD (usados en Capa 1 y 2c)
+  const obAggByOdt = {}, psmAggByOdt = {};
+  obConsumos.forEach(o => { const k=`${o.odt}|${o.codigo}`; obAggByOdt[k]=(obAggByOdt[k]||0)+o.qty; });
+  psmValidos.forEach(p => { const k=`${p.odt}|${p.codigo}`; psmAggByOdt[k]=(psmAggByOdt[k]||0)+p.qty; });
+
+  const aysaMap = {}; S.aysaNorm.forEach(a => { aysaMap[a.odt] = a; });
+  const infMap  = {}; S.infNorm.forEach(i  => { infMap[i.odt]  = i; });
+
+  S.conciliados = []; S.faltantes = []; S.excesos = [];
+  S.desviosAysa = []; S.duplicadosOb = []; S.patronIncompleto = [];
+  S.psmInterno = []; S.multiCuadrilla = []; S.desviosCuadrilla = [];
+  const obConsumosByOdtCod = new Set(obConsumos.map(o => `${o.odt}|${o.codigo}`));
+  S.errores = psmErrors.map(p => {
+    const verificadoOb = !!(p.odt && p.codigo && obConsumosByOdtCod.has(`${p.odt}|${p.codigo}`));
+    const subtipo = verificadoOb ? 'T7A' : 'T7B';
+    const tipoLabel = verificadoOb
+      ? 'T7A — Error RC (consumo verificado en Obrador)'
+      : 'T7B — Error RC (sin respaldo en Obrador)';
+    return { ...p, tipo: subtipo, tipoLabel, obs: p.remito, verificadoOb };
+  });
+
+  // ---- Capa 1: PSM Interno — Registro Consumos (RC) vs Reporte AySA ----
+  const rcByOdtCod = {};
+  psmValidos.forEach(p => {
+    const k = `${p.odt}|${p.codigo}`;
+    if (!rcByOdtCod[k]) rcByOdtCod[k] = { odt:p.odt, codigo:p.codigo, qty:0, legajo:'', cuadNombre:'', fecha:'', desc:p.desc };
+    rcByOdtCod[k].qty += p.qty;
+    if (!rcByOdtCod[k].legajo)     rcByOdtCod[k].legajo     = p.legajo;
+    if (!rcByOdtCod[k].cuadNombre) rcByOdtCod[k].cuadNombre = p.cuadNombre;
+    if (!rcByOdtCod[k].fecha)      rcByOdtCod[k].fecha       = p.fecha;
+  });
+  // Capa 1: solo ODTs en RC → verificar si AySA confirma (PI1/PI3/PI4)
+  // PI2 separado: OB+AySA confirman consumo pero RC no registró nada
+  const odtsPsmCross = new Set(psmValidos.map(p=>p.odt));
+  odtsPsmCross.forEach(odt => {
+    if (!odt) return;
+    const aysa = aysaMap[odt]; const inf = infMap[odt];
+    const rcMats = Object.values(rcByOdtCod).filter(r => r.odt === odt);
+    if (rcMats.length && !aysa) {
+      rcMats.forEach(r => S.psmInterno.push({
+        tipo:'PI1', tipoLabel:'PI1 — RC sin confirmación en Reporte AySA',
+        odt, codigo:r.codigo, desc:r.desc, cantRc:r.qty, cantAysa:0, delta:r.qty,
+        legajo:r.legajo, cuadNombre:r.cuadNombre, fecha:r.fecha,
+        lote:inf?.lote||'', infFotos:inf?.fotos||[], infGps:inf?.gps||'',
+        obs:`ODT ${odt} en RC pero ausente en Reporte AySA`
+      }));
+      return;
+    }
+    if (!rcMats.length && aysa) {
+      // PI2 solo si OB también registra consumo (confirma que el trabajo ocurrió)
+      const obConfirma = obConsumos.some(o=>o.odt===odt);
+      if (obConfirma) {
+        Object.entries(aysa.mats||{}).forEach(([cod, qtyAysa]) => {
+          if (!qtyAysa) return;
+          const qtyOb = obAggByOdt[`${odt}|${cod}`]||0;
+          if (!qtyOb) return; // si OB tampoco lo tiene, no es PI2
+          S.psmInterno.push({
+            tipo:'PI2', tipoLabel:'PI2 — Consumo confirmado OB+AySA sin registro en RC',
+            odt, codigo:cod, desc:'', cantRc:0, cantAysa:qtyAysa, delta:-qtyAysa,
+            legajo:'', cuadNombre:'', fecha:'',
+            lote:inf?.lote||aysa?.lote||'', infFotos:inf?.fotos||[], infGps:inf?.gps||'',
+            obs:`AySA=${qtyAysa} OB confirma=${qtyOb} — sin registro en RC`
+          });
+        });
+      }
+      return;
+    }
+    if (!aysa) return;
+    const allCods = new Set([...rcMats.map(r=>r.codigo), ...Object.keys(aysa.mats||{})]);
+    allCods.forEach(cod => {
+      const rcR     = rcByOdtCod[`${odt}|${cod}`];
+      const qtyRc   = rcR?.qty||0;
+      const qtyAysa = aysa.mats?.[cod]||0;
+      if (Math.abs(qtyRc - qtyAysa) < 0.001) return;
+      const tipo = qtyRc > qtyAysa ? 'PI3' : 'PI4';
+      S.psmInterno.push({
+        tipo, tipoLabel:tipo==='PI3'?'PI3 — RC mayor que Reporte AySA':'PI4 — Reporte AySA mayor que RC',
+        odt, codigo:cod, desc:rcR?.desc||'', cantRc:qtyRc, cantAysa:qtyAysa, delta:qtyRc-qtyAysa,
+        legajo:rcR?.legajo||'', cuadNombre:rcR?.cuadNombre||'', fecha:rcR?.fecha||'',
+        lote:inf?.lote||aysa?.lote||'', infFotos:inf?.fotos||[], infGps:inf?.gps||'',
+        obs:`RC=${qtyRc} AySA=${qtyAysa} Delta=${(qtyRc-qtyAysa).toFixed(0)}`
+      });
+    });
+  });
+
+  // ---- Capa 2: PSM-RC vs Obrador ----
+  allKeys.forEach(key => {
+    const [odt, codigo] = key.split('|');
+    const pE = psmAgg[key], obE = obAgg[key];
+    if (pE && obE) {
+      const diff       = pE.qty - obE.qty;
+      const leg        = [...pE.legajos].join(', ');
+      const cuadNombre = [...pE.cuads].filter(Boolean).join('|');
+      if (Math.abs(diff) < 0.001) {
+        S.conciliados.push({ odt, codigo, desc:pE.desc, cantPsm:pE.qty, cantOb:obE.qty, delta:0,
+          legajo:leg, cuadNombre, motivo:pE.rows.map(r=>r.motivo||'').join('|'),
+          remitoPsm:pE.rows.map(r=>r.remito).join('|'), fecha:pE.rows[0]?.fecha||'',
+          seriesRc:[...pE.series], seriesOb:[...obE.series], tipo:'OK', tipoLabel:'Conciliado OK' });
+      } else if (diff > 0) {
+        S.faltantes.push({ odt, codigo, desc:pE.desc, cantPsm:pE.qty, cantOb:obE.qty, delta:diff,
+          legajo:leg, cuadNombre, motivo:pE.rows.map(r=>r.motivo||'').join('|'), fecha:pE.rows[0]?.fecha||'',
+          seriesRc:[...pE.series], seriesOb:[...obE.series],
+          tipo:'T3', tipoLabel:'T3 — Desv\xedo Cuantitativo', obs:`PSM=${pE.qty} OB=${obE.qty} Faltan=${diff.toFixed(0)}` });
+      } else {
+        S.excesos.push({ odt, codigo, desc:obE.desc, cantPsm:pE.qty, cantOb:obE.qty, delta:Math.abs(diff),
+          legajo:[...obE.legajos].join(', '), cuadNombre:[...obE.cuads].filter(Boolean).join('|'),
+          fecha:obE.rows[0]?.fecha||'', seriesRc:[...pE.series], seriesOb:[...obE.series],
+          tipo:'T4', tipoLabel:'T4 — Exceso Obrador', obs:`OB=${obE.qty} PSM=${pE.qty}` });
+      }
+    } else if (pE) {
+      const leg        = [...pE.legajos].join(', ');
+      const cuadNombre = [...pE.cuads].filter(Boolean).join('|');
+      const tipo       = !odtsInOb.has(odt) ? 'T2' : 'T1';
+      S.faltantes.push({ odt, codigo, desc:pE.desc, cantPsm:pE.qty, cantOb:0, delta:pE.qty,
+        legajo:leg, cuadNombre, motivo:pE.rows.map(r=>r.motivo||'').join('|'), fecha:pE.rows[0]?.fecha||'',
+        seriesRc:[...pE.series], seriesOb:[],
+        tipo, tipoLabel:tipo==='T2'?'T2 — Faltante Total':'T1 — ODT Parcial',
+        obs:tipo==='T2'?`ODT ${odt} no impacta Obrador`:`C\xf3digo ${codigo} sin impacto en ODT ${odt}` });
+    } else if (obE) {
+      S.excesos.push({ odt, codigo, desc:obE.desc, cantPsm:0, cantOb:obE.qty, delta:obE.qty,
+        legajo:[...obE.legajos].join(', '), cuadNombre:[...obE.cuads].filter(Boolean).join('|'),
+        fecha:obE.rows[0]?.fecha||'', seriesRc:[], seriesOb:[...obE.series],
+        tipo:'T4', tipoLabel:'T4 — Exceso Obrador', obs:'Consumo OB sin declaraci\xf3n PSM' });
+    }
+  });
+
+  // ---- Capa 2b: Enrich faltantes ----
+  S.faltantes.forEach(f => {
+    const a = aysaMap[f.odt]; const i = infMap[f.odt];
+    f.aysaEstado = a?.estado||''; f.aysaTerminado = a?.terminado||false;
+    f.aysaQty = a?.mats?.[f.codigo]||0; f.aysaConfirma = f.aysaQty > 0;
+    f.infFoto = i?.foto||''; f.infGps = i?.gps||'';
+    f.infFotoOk = i?.fotoOk||false; f.infGpsOk = i?.gpsOk||false;
+    f.infFotos = i?.fotos||[]; f.lote = i?.lote||a?.lote||'';
+    f.score = 1 + (f.aysaConfirma?1:0) + (f.infFotoOk?1:0);
+    f.scoreLabel = f.score===3?'CONFIRMADO 3/3':f.score===2?'PROBABLE 2/3':'POSIBLE 1/3';
+  });
+
+  // ---- Capa 2c: Reporte AySA vs Obrador ----
+  S.aysaNorm.forEach(a => {
+    if (!a.odt || !a.mats || !Object.keys(a.mats).length) return;
+    Object.entries(a.mats).forEach(([cod, qtyAysa]) => {
+      const qtyOb  = obAggByOdt[`${a.odt}|${cod}`]||0;
+      const qtyPsm = psmAggByOdt[`${a.odt}|${cod}`]||0;
+      const inf = infMap[a.odt];
+      if (Math.abs(qtyAysa - qtyOb) > 0.001) {
+        const tipo = !qtyOb && !qtyPsm ? 'DA3' : !qtyOb ? 'DA1' : 'DA2';
+        const desc = { DA3:'AySA declar\xf3 — sin impacto en OB ni RC', DA1:'AySA declar\xf3 — en RC pero no impact\xf3 OB', DA2:'AySA declar\xf3 — diferencia de cantidad vs OB' }[tipo];
+        S.desviosAysa.push({ odt:a.odt, codigo:cod, tipo, tipoLabel:desc,
+          cantAysa:qtyAysa, cantOb:qtyOb, cantPsm:qtyPsm, delta:qtyAysa-qtyOb,
+          estado:a.estado, lote:a.lote||inf?.lote||'',
+          infFotoOk:inf?.fotoOk||false, infFotos:inf?.fotos||[], infGps:inf?.gps||'' });
+      }
+    });
+  });
+
+  // ---- Capa 3a: Integridad cuadrilla por ODT ----
+  const obOdtLegs = {};
+  obConsumos.forEach(o => { if (!o.odt||!o.legajo) return; if (!obOdtLegs[o.odt]) obOdtLegs[o.odt]=new Set(); obOdtLegs[o.odt].add(o.legajo); });
+  Object.entries(obOdtLegs).forEach(([odt, legs]) => {
+    if (legs.size <= 1) return;
+    const inf = infMap[odt]; const aysa = aysaMap[odt];
+    const legDetail = [...legs].map(l => {
+      const r = obConsumos.find(o=>o.odt===odt&&o.legajo===l);
+      return `${l}(${r?.cuadNombre||'?'})`;
+    }).join(' / ');
+    S.multiCuadrilla.push({ tipo:'MC1', tipoLabel:'MC1 — ODT con m\xfaltiples cuadrillas en Obrador',
+      odt, cantCuadrillas:legs.size, legajos:[...legs].join(', '), cuadrillas:legDetail,
+      estado:aysa?.estado||'', lote:inf?.lote||aysa?.lote||'',
+      infFotos:inf?.fotos||[], infGps:inf?.gps||'' });
+  });
+  const psmOdtLegs = {};
+  psmValidos.forEach(p => { if (!p.odt) return; if (!psmOdtLegs[p.odt]) psmOdtLegs[p.odt]=new Set(); psmOdtLegs[p.odt].add(p.legajo); });
+  new Set([...Object.keys(obOdtLegs), ...Object.keys(psmOdtLegs)]).forEach(odt => {
+    const obLegs  = obOdtLegs[odt]  || new Set();
+    const psmLegs = psmOdtLegs[odt] || new Set();
+    if (!obLegs.size || !psmLegs.size) return;
+    if (obLegs.size > 1) return; // ya reportado como MC1, no duplicar en DC1
+    const soloEnPsm = [...psmLegs].filter(l => !obLegs.has(l));
+    const soloEnOb  = [...obLegs].filter(l  => !psmLegs.has(l));
+    if (!soloEnPsm.length && !soloEnOb.length) return;
+    const inf = infMap[odt]; const aysa = aysaMap[odt];
+    S.desviosCuadrilla.push({ tipo:'DC1', tipoLabel:'DC1 — Cuadrilla diferente entre RC y Obrador',
+      odt, legajosPsm:[...psmLegs].join(', '), legajosOb:[...obLegs].join(', '),
+      soloEnPsm:soloEnPsm.join(', '), soloEnOb:soloEnOb.join(', '),
+      estado:aysa?.estado||'', lote:inf?.lote||aysa?.lote||'',
+      infFotos:inf?.fotos||[], infGps:inf?.gps||'',
+      obs:`RC=[${[...psmLegs].join(',')}] OB=[${[...obLegs].join(',')}]` });
+  });
+
+  // ---- Capa 3b: Cruce de series de medidores por ODT ----
+  // Solo para ODTs donde la CANTIDAD de medidores ya concuerda entre RC y OB.
+  // Si hay T3/T4 por qty, ya está reportado — no agregar T6 encima.
+  const medConciliadosOdts = new Set(
+    S.conciliados.filter(r=>r.codigo===COD_MEDIDOR).map(r=>r.odt)
+  );
+  const serRcByOdt = {}, serObByOdt = {};
+  psmValidos.filter(p=>p.codigo===COD_MEDIDOR&&p.serie).forEach(p=>{ if(!serRcByOdt[p.odt])serRcByOdt[p.odt]=new Set(); serRcByOdt[p.odt].add(p.serie); });
+  obConsumos.filter(o=>o.codigo===COD_MEDIDOR&&o.serie).forEach(o=>{ if(!serObByOdt[o.odt])serObByOdt[o.odt]=new Set(); serObByOdt[o.odt].add(o.serie); });
+  new Set([...Object.keys(serRcByOdt), ...Object.keys(serObByOdt)]).forEach(odt => {
+    if (!medConciliadosOdts.has(odt)) return; // qty ya anómala, T3/T4 lo cubre
+    const srRc = serRcByOdt[odt]||new Set(); const srOb = serObByOdt[odt]||new Set();
+    const onlyRc = [...srRc].filter(s=>!srOb.has(s));
+    const onlyOb = [...srOb].filter(s=>!srRc.has(s));
+    if (onlyRc.length && srOb.size) {
+      onlyRc.forEach(serie => {
+        const pRow = psmValidos.find(p=>p.odt===odt&&p.serie===serie);
+        const enOtro = obConsumos.find(o=>o.codigo===COD_MEDIDOR&&o.serie===serie&&o.odt!==odt);
+        S.faltantes.push({ odt, codigo:COD_MEDIDOR, serie, desc:'Medidor',
+          cantPsm:1, cantOb:0, delta:1, legajo:pRow?.legajo||'', cuadNombre:pRow?.cuadNombre||'',
+          motivo:'', fecha:pRow?.fecha||'', seriesRc:[serie], seriesOb:[],
+          tipo:'T6', tipoLabel:'T6 — Desv\xedo Serie Medidor',
+          obs:enOtro?`Serie consumida en OB bajo ODT ${enOtro.odt}`:`Serie ${serie} no encontrada en CONSUMO EN OBRA` });
+      });
+    }
+    if (onlyOb.length && srRc.size) {
+      onlyOb.forEach(serie => {
+        const oRow = obConsumos.find(o=>o.odt===odt&&o.codigo===COD_MEDIDOR&&o.serie===serie);
+        const enOtroRc = psmValidos.find(p=>p.codigo===COD_MEDIDOR&&p.serie===serie&&p.odt!==odt);
+        S.excesos.push({ odt, codigo:COD_MEDIDOR, serie, desc:'Medidor',
+          cantPsm:0, cantOb:1, delta:1, legajo:oRow?.legajo||'', cuadNombre:oRow?.cuadNombre||'',
+          fecha:oRow?.fecha||'', seriesRc:[], seriesOb:[serie],
+          tipo:'T4S', tipoLabel:'T4S — Serie Medidor en OB sin declaraci\xf3n RC',
+          obs:enOtroRc?`Serie declarada en RC bajo ODT ${enOtroRc.odt}`:`Serie ${serie} consumida en OB sin RC` });
+      });
+    }
+  });
+  const serObAll = {};
+  obConsumos.filter(o=>o.codigo===COD_MEDIDOR&&o.serie).forEach(o => { if(!serObAll[o.serie])serObAll[o.serie]=[]; serObAll[o.serie].push(o); });
+  Object.entries(serObAll).forEach(([serie, rows]) => {
+    if (rows.length < 2) return;
+    const inf = infMap[rows[0].odt];
+    S.duplicadosOb.push({ tipo:'DUP1', tipoLabel:'DUP1 — Serie consumida 2x en Obrador',
+      serie, odt:rows.map(r=>r.odt).join(' / '), legajos:[...new Set(rows.map(r=>r.legajo))].join(', '),
+      veces:rows.length, lote:inf?.lote||'', infFotos:inf?.fotos||[] });
+  });
+
+  // ---- 6c. Duplicados OB (ratio) ----
+  const odtRatios = {};
+  S.conciliados.concat(S.faltantes).forEach(r => {
+    if (!r.odt||!r.cantOb||!r.cantPsm) return;
+    if (!odtRatios[r.odt]) odtRatios[r.odt]=[];
+    odtRatios[r.odt].push(r.cantOb/r.cantPsm);
+  });
+  Object.entries(odtRatios).forEach(([odt, ratios]) => {
+    if (ratios.length < 2) return;
+    const allSame = ratios.every(r=>Math.abs(r-ratios[0])<0.01);
+    const ratio = ratios[0];
+    if (allSame && (Math.abs(ratio-2)<0.01||Math.abs(ratio-3)<0.01)) {
+      const inf = infMap[odt]; const a = aysaMap[odt];
+      S.duplicadosOb.push({ tipo:'DUP2', tipoLabel:'DUP2 — ODT duplicada en Obrador',
+        odt, ratio:Math.round(ratio), lineas:ratios.length,
+        lote:inf?.lote||a?.lote||'', estado:a?.estado||inf?.estado||'',
+        infFotoOk:inf?.fotoOk||false, infFotos:inf?.fotos||[] });
+    }
+  });
+
+  // ---- 6d. Patr\xf3n incompleto ----
+  const odtMatSet = {};
+  obConsumos.forEach(o=>{ if(!odtMatSet[o.odt])odtMatSet[o.odt]=new Set(); odtMatSet[o.odt].add(o.codigo); });
+  Object.entries(odtMatSet).forEach(([odt, mats]) => {
+    const aysa = aysaMap[odt]; const inf = infMap[odt];
+    const estado = aysa?.estado||inf?.estado||'';
+    if (!ESTADOS_R11R20.has(estado)) return;
+    const faltanNucleo = PATRON_NUCLEO.filter(c=>!mats.has(c));
+    if (!faltanNucleo.length) return;
+    const faltanConfirmados = faltanNucleo.filter(c=>!(aysa?.mats?.[c]>0));
+    if (!faltanConfirmados.length) return;
+    S.patronIncompleto.push({ odt, estado, materialesFaltantes:faltanConfirmados,
+      lote:aysa?.lote||inf?.lote||'',
+      infFotoOk:inf?.fotoOk||false, infFotos:inf?.fotos||[], infGps:inf?.gps||'',
+      titular:inf?.titular||'', direccion:inf?.direccion||'' });
+  });
+
+  // ---- Pendiente PSM al crew ----
+  S.faltantes.filter(f=>['T1','T2','T3'].includes(f.tipo)).forEach(f => {
+    const legs = (f.legajo||'').split(',').map(l=>l.trim()).filter(Boolean);
+    if (!legs.length) return;
+    const portion = (f.delta||0) / legs.length;
+    legs.forEach(leg => {
+      const cs = crewStock[leg]; if (!cs) return;
+      if (!cs.mats[f.codigo]) cs.mats[f.codigo] = { codigo:f.codigo, desc:f.desc, e:0, t:0, c:0, d:0, pend:0 };
+      cs.mats[f.codigo].pend += portion;
+    });
+  });
+  Object.values(crewStock).forEach(cs => {
+    cs.totPend = 0;
+    Object.values(cs.mats).forEach(m => { m.stock=m.e+m.t-m.c-m.d; m.proy=m.stock-(m.pend||0); cs.totPend+=m.pend||0; });
+    cs.stockTotal = cs.totE+cs.totT-cs.totC-cs.totD;
+    cs.stockProy  = cs.stockTotal-cs.totPend;
+  });
+  S.stockCuadrillas = crewStock;
+  setProgress(78,'Construyendo trazabilidad de medidores...','ps4'); await sleep(20);
+
+  // ---- 7. MEDIDORES ----
+  const obIngresos = S.obrNorm.filter(o => o.movimiento.includes('INGRESO DE PROVEEDOR') && o.codigo===COD_MEDIDOR && o.serie);
+  S.seriesIngresadas = new Set(obIngresos.map(o => o.serie));
+  S.remitosIngreso = new Set(obIngresos.map(o => o.remito));
+
+  // Mapas de ubicación por serie (último movimiento de cada tipo)
+  const obEnviosMap = {};    // serie → fila del último ENVIO A OBRA
+  const obDevolucionesSet = new Set(); // series devueltas al pañol
+  const obTrasladosMap = {}; // serie → fila del último TRASLADO ENTRE CUADRILLAS
+  S.obrNorm.forEach(o => {
+    if (o.codigo !== COD_MEDIDOR || !o.serie) return;
+    if (o.movimiento.includes('ENVIOS A OBRA'))            { obEnviosMap[o.serie] = o; }
+    else if (o.movimiento.includes('DEVOLUCIONES DE OBRA')){ obDevolucionesSet.add(o.serie); }
+    else if (o.movimiento.includes('TRASLADO'))            { obTrasladosMap[o.serie] = o; }
+  });
+
+  const obConsumosMap = {};
+  obConsumos.filter(o=>o.codigo===COD_MEDIDOR && o.serie).forEach(o => { if(!obConsumosMap[o.serie]) obConsumosMap[o.serie]=o; });
+  const psmMedMap = {};
+  S.psmNorm.filter(p=>p.codigo===COD_MEDIDOR && p.serie).forEach(p => { if(!psmMedMap[p.serie]) psmMedMap[p.serie]=p; });
+  const aysaMedMap = {};
+  S.aysaNorm.filter(a=>a.medidor).forEach(a => { if(!aysaMedMap[a.medidor]) aysaMedMap[a.medidor]=a; });
+
+  // Determina ubicación actual de un medidor no consumido
+  function ubicacionMedidor(serie) {
+    // Si fue trasladado, está en la cuadrilla destino del traslado
+    const trad = obTrasladosMap[serie];
+    if (trad) return { lugar:'en_cuadrilla', legajo:trad.legajo, nombre:trad.cuadNombre };
+    // Si fue enviado (y no devuelto), está en la cuadrilla receptora
+    const env = obEnviosMap[serie];
+    if (env && !obDevolucionesSet.has(serie)) return { lugar:'en_cuadrilla', legajo:env.legajo, nombre:env.cuadNombre };
+    // De lo contrario está en el pañol
+    return { lugar:'en_panel', legajo:'', nombre:'Pañol' };
+  }
+
+  S.medidores = [];
+  // Universo 1: series ingresadas en Obrador (camino normal)
+  S.seriesIngresadas.forEach(serie => {
+    const ob = obConsumosMap[serie];
+    const psm = psmMedMap[serie];
+    const aysa = aysaMedMap[serie];
+    const odtOb = ob?.odt||''; const odtPsm = psm?.odt||''; const odtAysa = aysa?.odt||'';
+    const inf = infMap[odtOb] || infMap[odtPsm] || infMap[odtAysa];
+    let score = 0;
+    if (ob) score++; if (psm) score++; if (aysa) score++; if (inf?.fotoOk) score++;
+
+    let status, statusLabel, cuadActual = '', cuadNombreActual = '';
+    if (ob) {
+      // Medidor consumido (instalado) en Obrador
+      if (!psm && !aysa)                                          { status='sin_psm';     statusLabel='❌ Sin declaración PSM'; }
+      else if (odtOb && odtPsm && odtOb !== odtPsm)              { status='desvio_odt';  statusLabel='⚠ Desvío ODT'; }
+      else if (ob?.legajo && psm?.legajo && ob.legajo !== psm.legajo) { status='desvio_cuad'; statusLabel='⚠ Desvío Cuadrilla'; }
+      else if (!inf?.fotoOk)                                      { status='sin_foto';    statusLabel='📷 Sin foto campo'; }
+      else                                                        { status='ok';          statusLabel='✅ Trazabilidad OK'; }
+    } else if (psm) {
+      // PSM declara consumido pero Obrador no registra egreso → desincronización
+      status='psm_sin_egreso_ob'; statusLabel='🟠 PSM declarado — sin egreso Obrador';
+    } else {
+      // No consumido → determinar ubicación física actual
+      const ub = ubicacionMedidor(serie);
+      cuadActual = ub.legajo; cuadNombreActual = ub.nombre;
+      if (ub.lugar === 'en_cuadrilla') { status='en_cuadrilla'; statusLabel='📦 En Cuadrilla'; }
+      else                             { status='en_panel';     statusLabel='🏭 En Pañol'; }
+    }
+    S.medidores.push({
+      serie, status, statusLabel, score, consumido: !!ob,
+      cuadActual, cuadNombreActual,
+      odtOb, odtPsm, odtAysa,
+      legajoOb: ob?.legajo||'', cuadNombreOb: ob?.cuadNombre||'',
+      legajoPsm: psm?.legajo||'', cuadNombrePsm: psm?.cuadNombre||'',
+      fechaOb: ob?.fecha||'', fechaPsm: psm?.fecha||'',
+      lote: inf?.lote||aysa?.lote||'',
+      titular: inf?.titular||'', direccion: inf?.direccion||'', localidad: inf?.localidad||'',
+      foto: inf?.foto||'', fotos: inf?.fotos||[],
+      gps: inf?.gps||'', fotoOk: inf?.fotoOk||false, gpsOk: inf?.gpsOk||false,
+      estadoAysa: aysa?.estado||'',
+    });
+  });
+
+  // Universo 2: series en Registro Consumos PSM que NUNCA ingresaron al Obrador.
+  // Anomalía crítica: alguien declaró un medidor que el pañol nunca recibió.
+  const seriesEnPsm = new Set(S.psmNorm.filter(p=>p.codigo===COD_MEDIDOR && p.serie).map(p=>p.serie));
+  seriesEnPsm.forEach(serie => {
+    if (S.seriesIngresadas.has(serie)) return;
+    const psm = psmMedMap[serie];
+    const aysa = aysaMedMap[serie];
+    const odtPsm = psm?.odt||''; const odtAysa = aysa?.odt||'';
+    const inf = infMap[odtPsm] || infMap[odtAysa];
+    let score = 0; if (psm) score++; if (aysa) score++; if (inf?.fotoOk) score++;
+    S.medidores.push({
+      serie, status:'no_ob', statusLabel:'⚠ Solo en PSM (sin ingreso OB)',
+      score, consumido:true, cuadActual:'', cuadNombreActual:'',
+      odtOb:'', odtPsm, odtAysa,
+      legajoOb:'', cuadNombreOb:'',
+      legajoPsm:psm?.legajo||'', cuadNombrePsm:psm?.cuadNombre||'',
+      fechaOb:'', fechaPsm:psm?.fecha||'',
+      lote:inf?.lote||aysa?.lote||'',
+      titular:inf?.titular||'', direccion:inf?.direccion||'', localidad:inf?.localidad||'',
+      foto:inf?.foto||'', fotos:inf?.fotos||[],
+      gps:inf?.gps||'', fotoOk:inf?.fotoOk||false, gpsOk:inf?.gpsOk||false,
+      estadoAysa:aysa?.estado||'',
+    });
+  });
+
+  // Universo 3: series en Registro AySA que NUNCA ingresaron al Obrador ni están en PSM.
+  // Medidor que AySA da por instalado pero el pañol nunca recibió ni PSM lo declaró.
+  Object.entries(aysaMedMap).forEach(([serie, aysa]) => {
+    if (S.seriesIngresadas.has(serie)) return;
+    if (seriesEnPsm.has(serie)) return;
+    const odtAysa = aysa?.odt||'';
+    const inf = infMap[odtAysa];
+    let score = 0; if (aysa) score++; if (inf?.fotoOk) score++;
+    S.medidores.push({
+      serie, status:'fantasma_aysa', statusLabel:'🔴 Declarado AySA sin ingreso OB',
+      score, consumido:true, cuadActual:'', cuadNombreActual:'',
+      odtOb:'', odtPsm:'', odtAysa,
+      legajoOb:'', cuadNombreOb:'', legajoPsm:'', cuadNombrePsm:'',
+      fechaOb:'', fechaPsm:'',
+      lote:inf?.lote||aysa?.lote||'',
+      titular:inf?.titular||'', direccion:inf?.direccion||'', localidad:inf?.localidad||'',
+      foto:inf?.foto||'', fotos:inf?.fotos||[],
+      gps:inf?.gps||'', fotoOk:inf?.fotoOk||false, gpsOk:inf?.gpsOk||false,
+      estadoAysa:aysa?.estado||'',
+    });
+  });
+
+  // ---- 8. ODTs ----
+  setProgress(90,'Consolidando vista de ODTs...','ps6'); await sleep(15);
+  const odtsAll = new Set([...S.psmNorm.map(p=>p.odt), ...obConsumos.map(o=>o.odt), ...Object.keys(infMap), ...Object.keys(aysaMap)]);
+  S.odtsMap = {};
+  odtsAll.forEach(odt => {
+    if (!odt) return;
+    const infR = infMap[odt]; const aysaR = aysaMap[odt];
+    const psmRows = S.psmNorm.filter(p=>p.odt===odt);
+    const obRows = obConsumos.filter(o=>o.odt===odt);
+    const psmQty = psmRows.reduce((s,r)=>s+r.qty,0);
+    const obQty = obRows.reduce((s,r)=>s+r.qty,0);
+    const legajos = new Set([...psmRows.map(p=>p.legajo),...obRows.map(o=>o.legajo)]);
+    const cuad = psmRows[0]?.cuadNombre || obRows[0]?.cuadNombre || '';
+    let estadoOdt = 'ok';
+    if (aysaR?.terminado && !obRows.length && !psmRows.length) estadoOdt='fantasma';
+    else if (!obRows.length && psmRows.length) estadoOdt='faltante';
+    else if (obRows.length && (!psmRows.length || Math.abs(psmQty-obQty)>0.5)) estadoOdt='parcial';
+    S.odtsMap[odt] = {
+      odt, estadoOdt,
+      psmMats: psmRows.length, obMats: obRows.length, psmQty, obQty,
+      legajos:[...legajos].join(', '), cuad,
+      estadoAysa: aysaR?.estado||'', terminadoAysa: aysaR?.terminado||false,
+      lote: infR?.lote||aysaR?.lote||'',
+      foto: infR?.foto||'', fotos: infR?.fotos||[], gps: infR?.gps||'',
+      fotoOk: infR?.fotoOk||false, gpsOk: infR?.gpsOk||false,
+      titular: infR?.titular||'', direccion: infR?.direccion||'',
+      localidad: infR?.localidad||'', fechaInf: infR?.fecha||'',
+      medidorAysa: aysaR?.medidor||'', precintoAysa: aysaR?.precinto||'',
+    };
+  });
+
+  // ---- 9. PATRONES DE INSTALACION ----
+  // Agrupar ODTs por la combinacion (set ordenado) de codigos consumidos en OB.
+  // Cada combinacion unica es un "patron" que el usuario puede nombrar.
+  const odtCodSet = {};
+  obConsumos.forEach(o => {
+    if (!o.odt || !o.codigo) return;
+    if (!odtCodSet[o.odt]) odtCodSet[o.odt] = new Set();
+    odtCodSet[o.odt].add(o.codigo);
+  });
+  const patBySig = {};
+  S.patronOdtMap = {};
+  Object.entries(odtCodSet).forEach(([odt, codSet]) => {
+    const codigos = [...codSet].sort();
+    const sig = codigos.join(',');
+    if (!patBySig[sig]) patBySig[sig] = { sig, codigos, count:0, odts:[] };
+    patBySig[sig].count++;
+    patBySig[sig].odts.push(odt);
+    S.patronOdtMap[odt] = sig;
+  });
+  S.patrones = Object.values(patBySig).sort((a,b)=>b.count-a.count);
+
+  setProgress(100,'Auditoría completada.','ps6'); await sleep(120);
+  $('progress-wrap').style.display = 'none';
+  S.processed = true;
+  set('sb-estado','Procesado ✓');
+  $('sb-estado').style.color='var(--ok)';
+
+  // Populate lote filters
+  const lotes = [...new Set(S.medidores.map(m=>m.lote).filter(Boolean))].sort();
+  ['f-med-lote','f-odt-lote'].forEach(id => {
+    const sel = $(id);
+    while (sel.options.length>1) sel.remove(1);
+    lotes.forEach(l => { const o=document.createElement('option'); o.value=l; o.textContent=l; sel.appendChild(o); });
+  });
+
+  const totAnom = S.faltantes.length + S.excesos.length + S.errores.length + S.desviosAysa.length + S.duplicadosOb.length + S.patronIncompleto.length + S.psmInterno.length + S.multiCuadrilla.length + S.desviosCuadrilla.length;
+  set('nb-anom', totAnom.toLocaleString());
+  set('nb-conc', S.conciliados.length.toLocaleString());
+  set('nb-med', S.seriesIngresadas.size.toLocaleString());
+  set('nb-odts', Object.keys(S.odtsMap).length.toLocaleString());
+  set('badge-conc-total', S.conciliados.length.toLocaleString());
+  set('badge-med-total', S.seriesIngresadas.size.toLocaleString());
+  set('badge-odts-total', Object.keys(S.odtsMap).length.toLocaleString());
+
+  set('nb-pat', S.patrones.length.toLocaleString());
+  set('badge-pat-total', S.patrones.length.toLocaleString());
+  populatePatternFilters();
+
+  showToast(`Auditoría completada · ${S.medidores.length.toLocaleString()} medidores · ${S.conciliados.length.toLocaleString()} conciliados · ${totAnom.toLocaleString()} anomalías (${S.psmInterno.length} PSM interno · ${S.multiCuadrilla.length+S.desviosCuadrilla.length} cuadrilla) · ${S.patrones.length} patrones`,'success');
+  updateDashboard(); renderMedidores(); renderOdts(); renderStock(); renderPanel(); renderAnomalias(); renderConciliados(); renderPatrones();
+  const savedBytes = saveStateLocal();
+  if (savedBytes) console.log('Estado guardado:', (savedBytes/1024).toFixed(1)+' KB');
+  goPage('dashboard');
+}
+
+// ---------- DASHBOARD ----------
+function updateDashboard() {
+  const today = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  set('dash-date','Procesado '+today);
+  const meds = S.medidores;
+  const cons = meds.filter(m=>m.consumido);
+  const enStock = meds.filter(m=>!m.consumido);
+  const s4 = meds.filter(m=>m.score===4).length;
+  const sinPsm = cons.filter(m=>m.status==='sin_psm').length;
+  const conFoto = cons.filter(m=>m.fotoOk).length;
+  const desvios = cons.filter(m=>['desvio_odt','desvio_cuad'].includes(m.status)).length;
+  const totStock = Object.values(S.stockCuadrillas).reduce((s,c)=>s+c.stockTotal,0);
+  const totPend = Object.values(S.stockCuadrillas).reduce((s,c)=>s+c.totPend,0);
+
+  const soloPsm = meds.filter(m=>m.status==='no_ob').length;
+  const enPanel    = meds.filter(m=>m.status==='en_panel').length;
+  const enCuadrilla= meds.filter(m=>m.status==='en_cuadrilla').length;
+  const fantasmaAysa = meds.filter(m=>m.status==='fantasma_aysa').length;
+  const psmSinEgreso = meds.filter(m=>m.status==='psm_sin_egreso_ob').length;
+  kpiGrid('kpi-stock',[
+    {label:'Medidores Ingresados OB',val:S.seriesIngresadas.size.toLocaleString(),cls:'ok',accent:'c-ok',sub:`${S.remitosIngreso.size} remitos — series únicas en Obrador`},
+    {label:'Instalados en Campo',val:cons.length.toLocaleString(),cls:'blue',accent:'c-blue',sub:'consumo registrado en Obrador con serie'},
+    {label:'En Pañol',val:enPanel.toLocaleString(),cls:'ok',accent:'c-ok',sub:'ingresados, aún no enviados a cuadrilla'},
+    {label:'En Cuadrilla',val:enCuadrilla.toLocaleString(),cls:'yellow',accent:'c-yellow',sub:'enviados a cuadrilla, pendientes de instalar'},
+    {label:'Sin Declaración PSM',val:sinPsm.toLocaleString(),cls:'danger',accent:'c-danger',sub:'consumidos en OB sin declaración PSM ni AySA'},
+    {label:'PSM sin egreso OB',val:psmSinEgreso.toLocaleString(),cls:'warn',accent:'c-warn',sub:'PSM declaró consumo pero OB no registró egreso'},
+    {label:'Declarado AySA sin OB',val:fantasmaAysa.toLocaleString(),cls:'danger',accent:'c-danger',sub:'AySA da por instalado — pañol nunca lo recibió'},
+    {label:'Solo en PSM (sin OB)',val:soloPsm.toLocaleString(),cls:'danger',accent:'c-danger',sub:'PSM declaró serie que nunca ingresó al pañol'},
+  ]);
+
+  kpiGrid('kpi-conc',[
+    {label:'Conciliados OK (Capa 2)',val:S.conciliados.length.toLocaleString(),cls:'ok',accent:'c-ok',sub:'RC ↔ OB exactos por ODT+Código+Cantidad'},
+    {label:'Faltantes OB (Capa 2)',val:S.faltantes.length.toLocaleString(),cls:'danger',accent:'c-danger',sub:`${S.faltantes.filter(f=>f.score===3).length} confirmados por RC+AySA+Foto`},
+    {label:'PSM Interno (Capa 1)',val:S.psmInterno.length.toLocaleString(),cls:'warn',accent:'c-warn',sub:'Desvíos entre RC y Reporte AySA (fuentes PSM)'},
+    {label:'Desvíos AySA↔OB (Capa 2c)',val:S.desviosAysa.length.toLocaleString(),cls:'warn',accent:'c-warn',sub:'Reporte AySA difiere del Obrador'},
+    {label:'Integridad Cuadrillas (Capa 3a)',val:(S.multiCuadrilla.length+S.desviosCuadrilla.length).toLocaleString(),cls:'purple',accent:'c-purple',sub:'MC1 multi-cuadrilla + DC1 desvío cuadrilla'},
+    {label:'Patrón Incompleto (Capa 3c)',val:S.patronIncompleto.length.toLocaleString(),cls:'yellow',accent:'c-yellow',sub:'ODTs R11/R20 sin materiales núcleo — revisar'},
+    {label:'Duplicados OB',val:S.duplicadosOb.length.toLocaleString(),cls:'purple',accent:'c-purple',sub:'Series 2x + ODTs 2x o 3x en Obrador'},
+  ]);
+
+  kpiGrid('kpi-traz',[
+    {label:'Trazabilidad 4/4',val:s4.toLocaleString(),cls:'ok',accent:'c-ok',sub:'OB+PSM+AySA+Foto confirmados'},
+    {label:'Con Foto de Campo',val:conFoto.toLocaleString(),cls:'blue',accent:'c-blue',sub:'evidencia fotográfica disponible'},
+    {label:'Con GPS Validado',val:cons.filter(m=>m.gpsOk).length.toLocaleString(),cls:'purple',accent:'c-purple',sub:'ubicación GPS confirmada'},
+    {label:'Sin Evidencia Campo',val:cons.filter(m=>!m.fotoOk&&!m.gpsOk).length.toLocaleString(),cls:'warn',accent:'c-warn',sub:'instalados sin foto ni GPS'},
+  ]);
+
+  // Charts
+  const cuadColors = Object.values(S.stockCuadrillas).map(cs => {
+    const anomCS = S.faltantes.filter(f => f.legajo?.includes(cs.legajo)).length;
+    const color = anomCS === 0 ? 'ok' : anomCS < 5 ? 'warn' : 'danger';
+    return { nombre: cs.nombre||cs.legajo, color, anom: anomCS };
+  }).sort((a,b)=>b.anom-a.anom);
+  const maxAnom = cuadColors[0]?.anom||1;
+  $('chart-semaforo').innerHTML = (cuadColors.slice(0,10).map(c=>`
+    <div class="bar-row">
+      <div class="bar-label" title="${esc(c.nombre)}">${esc(c.nombre.substring(0,18))}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,c.anom/maxAnom*100).toFixed(0)}%;background:var(--${c.color})"></div></div>
+      <div class="bar-val">${c.anom}</div>
+    </div>`).join(''))||'<div class="empty" style="padding:16px"><div class="empty-desc">Sin datos</div></div>';
+
+  const loteCounts = {};
+  S.medidores.forEach(m=>{ if(m.lote) loteCounts[m.lote]=(loteCounts[m.lote]||0)+1; });
+  const topLotes = Object.entries(loteCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxLote = topLotes[0]?.[1]||1;
+  $('chart-lotes').innerHTML = topLotes.map(([l,n])=>`
+    <div class="bar-row">
+      <div class="bar-label" title="${esc(l)}">${esc(l.substring(0,16))}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(n/maxLote*100).toFixed(0)}%;background:var(--blue)"></div></div>
+      <div class="bar-val">${n.toLocaleString()}</div>
+    </div>`).join('')||'<div class="empty" style="padding:16px"><div class="empty-desc">Sin lotes</div></div>';
+
+  const anomTypes = [
+    {label:'T1 — ODT Parcial', n:S.faltantes.filter(f=>f.tipo==='T1').length, color:'warn'},
+    {label:'T2 — Faltante Total', n:S.faltantes.filter(f=>f.tipo==='T2').length, color:'danger'},
+    {label:'T3 — Cant. Desvío', n:S.faltantes.filter(f=>f.tipo==='T3').length, color:'yellow'},
+    {label:'T4 — Exceso OB', n:S.excesos.length, color:'blue'},
+    {label:'T6 — Serie Med.', n:S.faltantes.filter(f=>f.tipo==='T6').length, color:'danger'},
+    {label:'T7B — Error RC sin respaldo OB', n:S.errores.filter(e=>e.tipo==='T7B').length, color:'danger'},
+    {label:'T7A — Error RC verificado OB', n:S.errores.filter(e=>e.tipo==='T7A').length, color:'text3'},
+    {label:'PI — PSM Interno', n:S.psmInterno.length, color:'warn'},
+    {label:'MC/DC — Cuadrilla', n:S.multiCuadrilla.length+S.desviosCuadrilla.length, color:'purple'},
+    {label:'DUP — Duplicados', n:S.duplicadosOb.length, color:'purple'},
+  ];
+  const maxA = Math.max(...anomTypes.map(a=>a.n),1);
+  $('chart-anom-dist').innerHTML = anomTypes.filter(a=>a.n>0).map(a=>`
+    <div class="bar-row">
+      <div class="bar-label">${esc(a.label)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(a.n/maxA*100).toFixed(0)}%;background:var(--${a.color})"></div></div>
+      <div class="bar-val">${a.n.toLocaleString()}</div>
+    </div>`).join('')||'<div class="empty" style="padding:16px"><div class="empty-desc">Sin anomalías 🎉</div></div>';
+
+  let sumHTML = '<table><thead><tr><th>Tipo</th><th>Descripción</th><th>Registros</th><th>Unidades</th><th>Prioridad</th></tr></thead><tbody>';
+  const anomSummary = [
+    {tag:'<span class="tag t-ok">OK</span>', desc:'Conciliado RC ↔ OB', n:S.conciliados.length, u:S.conciliados.reduce((s,r)=>s+r.cantPsm,0), pri:'—'},
+    {tag:'<span class="tag t-danger">T2</span>', desc:'Faltante Total — ODT sin ningún registro en OB', n:S.faltantes.filter(f=>f.tipo==="T2").length, u:S.faltantes.filter(f=>f.tipo==="T2").reduce((s,r)=>s+r.delta,0), pri:'<span class="badge b-danger">CRÍTICO</span>'},
+    {tag:'<span class="tag t-danger">T6</span>', desc:'Desvío Serie Medidor', n:S.faltantes.filter(f=>f.tipo==="T6").length, u:S.faltantes.filter(f=>f.tipo==="T6").reduce((s,r)=>s+r.delta,0), pri:'<span class="badge b-danger">CRÍTICO</span>'},
+    {tag:'<span class="tag t-warn">T1</span>', desc:'ODT Parcialmente impactada en OB', n:S.faltantes.filter(f=>f.tipo==="T1").length, u:S.faltantes.filter(f=>f.tipo==="T1").reduce((s,r)=>s+r.delta,0), pri:'<span class="badge b-warn">IMPORTANTE</span>'},
+    {tag:'<span class="tag t-yellow">T3</span>', desc:'Desvío Cuantitativo (RC > OB)', n:S.faltantes.filter(f=>f.tipo==="T3").length, u:S.faltantes.filter(f=>f.tipo==="T3").reduce((s,r)=>s+r.delta,0), pri:'<span class="badge b-warn">IMPORTANTE</span>'},
+    {tag:'<span class="tag t-warn">PI</span>', desc:'PSM Interno — RC vs Reporte AySA no coinciden', n:S.psmInterno.length, u:0, pri:'<span class="badge b-warn">IMPORTANTE</span>'},
+    {tag:'<span class="tag t-blue">T4</span>', desc:'Exceso Obrador sin declaración RC', n:S.excesos.length, u:S.excesos.reduce((s,r)=>s+r.delta,0), pri:'<span class="badge b-blue">REVISAR</span>'},
+    {tag:'<span class="tag t-purple">MC/DC</span>', desc:'Integridad cuadrilla por ODT', n:S.multiCuadrilla.length+S.desviosCuadrilla.length, u:0, pri:'<span class="badge b-blue">REVISAR</span>'},
+    {tag:'<span class="tag t-danger">T7B</span>', desc:'Error RC sin respaldo en Obrador — consumo no verificable', n:S.errores.filter(e=>e.tipo==='T7B').length, u:0, pri:'<span class="badge b-danger">CRÍTICO</span>'},
+    {tag:'<span class="tag t-gray">T7A</span>', desc:'Error RC con consumo verificado en Obrador (error administrativo)', n:S.errores.filter(e=>e.tipo==='T7A').length, u:0, pri:'<span class="badge b-gray">INFO</span>'},
+  ];
+  anomSummary.forEach(a => {
+    if (!a.n) return;
+    sumHTML += `<tr><td>${a.tag}</td><td class="td-main">${esc(a.desc)}</td><td class="td-main">${a.n.toLocaleString()}</td><td>${Math.round(a.u).toLocaleString()}</td><td>${a.pri}</td></tr>`;
+  });
+  sumHTML += '</tbody></table>';
+  $('dash-anom-summary').innerHTML = sumHTML;
+}
+function kpiGrid(id, items) {
+  $(id).innerHTML = items.map(k=>`
+    <div class="kpi-card ${k.accent} fade-up">
+      <div class="kpi-label">${esc(k.label)}</div>
+      <div class="kpi-val ${k.cls}">${esc(k.val)}</div>
+      <div class="kpi-sub">${esc(k.sub)}</div>
+    </div>`).join('');
+}
+
+// ---------- TABLE ENGINE ----------
+function renderTable(tblId, pagId, data, cols, pageKey) {
+  const page = S.pages[pageKey]||1;
+  const total = data.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  if (safePage !== page) S.pages[pageKey] = safePage;
+  const slice = data.slice((safePage-1)*PAGE_SIZE, safePage*PAGE_SIZE);
+  if (!slice.length) {
+    $(tblId).innerHTML = emptyState('Sin resultados','No hay datos para los filtros aplicados.');
+    $(pagId).innerHTML = '';
+    return;
+  }
+  let html = '<table><thead><tr>'+cols.map(c=>`<th>${esc(c.label)}</th>`).join('')+'</tr></thead><tbody>';
+  slice.forEach((r,idx) => {
+    const ridx = (safePage-1)*PAGE_SIZE + idx;
+    html += `<tr data-row-key="${pageKey}|${ridx}">`+
+      cols.map(c=>`<td class="${c.cls||''}">${c.render?c.render(r):esc(r[c.key]??'—')}</td>`).join('')+'</tr>';
+  });
+  html += '</tbody></table>';
+  $(tblId).innerHTML = html;
+  // Render pagination
+  const pgEl = $(pagId);
+  let pg = `<span>Mostrando ${((safePage-1)*PAGE_SIZE+1).toLocaleString()}–${Math.min(safePage*PAGE_SIZE,total).toLocaleString()} de ${total.toLocaleString()}</span><div class="pag-btns">`;
+  pg += `<button class="pag-btn" data-pag="${pageKey}" data-action="prev" ${safePage<=1?'disabled':''}>◀</button>`;
+  let start = Math.max(1, safePage-2);
+  let end = Math.min(pages, safePage+2);
+  if (start > 1) pg += `<button class="pag-btn" data-pag="${pageKey}" data-page="1">1</button>${start>2?'<span style="padding:0 4px">…</span>':''}`;
+  for(let i=start; i<=end; i++) pg += `<button class="pag-btn ${i===safePage?'active':''}" data-pag="${pageKey}" data-page="${i}">${i}</button>`;
+  if (end < pages) pg += `${end<pages-1?'<span style="padding:0 4px">…</span>':''}<button class="pag-btn" data-pag="${pageKey}" data-page="${pages}">${pages}</button>`;
+  pg += `<button class="pag-btn" data-pag="${pageKey}" data-action="next" ${safePage>=pages?'disabled':''}>▶</button></div>`;
+  pgEl.innerHTML = pg;
+}
+function rerender(k) {
+  const m = { medidores:renderMedidores, odts:renderOdts, panel:renderPanel, conciliados:renderConciliados, patrones:renderPatrones };
+  if (m[k]) m[k](true);
+}
+
+// ---------- MEDIDORES ----------
+function renderMedidores(keepPage) {
+  if (!keepPage) S.pages.medidores = 1;
+  const fSerie = $('f-med-serie').value.toUpperCase();
+  const fOdt   = $('f-med-odt').value;
+  const fCuad  = $('f-med-cuad').value.toUpperCase();
+  const fScore = $('f-med-score').value;
+  const fEst   = $('f-med-estado').value;
+  const fLote  = $('f-med-lote').value;
+  let data = [...S.medidores];
+  if (fSerie) data = data.filter(m=>m.serie.includes(fSerie));
+  if (fOdt) data = data.filter(m=>(m.odtOb+m.odtPsm).includes(fOdt));
+  if (fCuad) data = data.filter(m=>(m.legajoOb+' '+m.cuadNombreOb+' '+m.legajoPsm).toUpperCase().includes(fCuad));
+  if (fScore) data = data.filter(m=>m.score===parseInt(fScore,10));
+  if (fEst) data = data.filter(m=>m.status===fEst);
+  if (fLote) data = data.filter(m=>m.lote===fLote);
+
+  kpiGrid('kpi-med-top',[
+    {label:'Total en Trazabilidad',val:S.medidores.length.toLocaleString(),cls:'ok',accent:'c-ok',sub:'universo completo: OB + PSM + AySA'},
+    {label:'Trazabilidad 4/4',val:S.medidores.filter(m=>m.score===4).length.toLocaleString(),cls:'ok',accent:'c-ok',sub:'todos los sistemas confirmados'},
+    {label:'En Pañol',val:S.medidores.filter(m=>m.status==='en_panel').length.toLocaleString(),cls:'ok',accent:'c-ok',sub:'en almacén central — sin asignar'},
+    {label:'En Cuadrilla',val:S.medidores.filter(m=>m.status==='en_cuadrilla').length.toLocaleString(),cls:'yellow',accent:'c-yellow',sub:'asignados a cuadrilla — sin instalar'},
+    {label:'Sin Declaración PSM',val:S.medidores.filter(m=>m.status==='sin_psm').length.toLocaleString(),cls:'danger',accent:'c-danger',sub:'instalados en OB sin PSM ni AySA'},
+    {label:'Anomalías de Origen',val:S.medidores.filter(m=>['no_ob','fantasma_aysa','psm_sin_egreso_ob'].includes(m.status)).length.toLocaleString(),cls:'danger',accent:'c-danger',sub:'declarados sin ingreso OB o sin egreso OB'},
+  ]);
+  set('badge-med-total', data.length.toLocaleString());
+
+  renderTable('tbl-medidores','pag-medidores',data,[
+    {label:'Serie', key:'serie', cls:'td-serie', render:r=>esc(r.serie)},
+    {label:'Estado', render:r=>`<span class="tag ${statusTagClass(r.status)}">${esc(r.statusLabel)}</span>`},
+    {label:'Score', render:r=>`<span class="score score-${r.score}">${r.score}/4</span>`},
+    {label:'Ubicación', render:r=>{
+      if (r.status==='en_panel')     return '<span class="tag t-gray">🏭 Pañol</span>';
+      if (r.status==='en_cuadrilla') return `<span class="tag t-yellow" title="${esc(r.cuadNombreActual)}">📦 ${esc(trunc(r.cuadNombreActual,18))}</span>`;
+      if (r.consumido)               return '<span class="tag t-ok">✅ Instalado</span>';
+      return '—';
+    }},
+    {label:'ODT Obrador', key:'odtOb', cls:'td-odt', render:r=>esc(r.odtOb)||'—'},
+    {label:'ODT PSM', cls:'td-odt', render:r=>r.odtPsm?`<span style="color:${r.odtPsm===r.odtOb?'var(--ok)':'var(--danger)'}">${esc(r.odtPsm)}</span>`:'—'},
+    {label:'ODT AySA', cls:'td-odt', render:r=>r.odtAysa?`<span style="color:${r.odtAysa===r.odtOb?'var(--ok)':'var(--warn)'}">${esc(r.odtAysa)}</span>`:'—'},
+    {label:'Legajo OB', render:r=>esc(r.legajoOb||r.cuadActual)||'—'},
+    {label:'Cuadrilla', render:r=>esc(trunc(r.cuadNombreOb||r.cuadNombreActual,20))},
+    {label:'Lote', render:r=>esc(r.lote)||'—'},
+    {label:'Titular', render:r=>esc(trunc(r.titular,22))},
+    {label:'Localidad', render:r=>esc(r.localidad)||'—'},
+    {label:'Estado AySA', render:r=>r.estadoAysa?`<span class="tag ${r.estadoAysa==='R11'||r.estadoAysa==='R20'?'t-ok':'t-gray'}">${esc(r.estadoAysa)}</span>`:'—'},
+    {label:'Evidencia', render:r=>fotoBtn(r.fotos||[], r.gps)},
+  ],'medidores');
+}
+function statusTagClass(s) {
+  return {
+    ok:'t-ok', sin_psm:'t-danger', psm_sin_egreso_ob:'t-warn',
+    no_ob:'t-danger', fantasma_aysa:'t-danger',
+    desvio_odt:'t-warn', desvio_cuad:'t-warn',
+    sin_foto:'t-blue', en_cuadrilla:'t-yellow', en_panel:'t-gray',
+  }[s]||'t-gray';
+}
+
+// ---------- ODTS ----------
+function renderOdts(keepPage) {
+  if (!keepPage) S.pages.odts = 1;
+  const fOdt = $('f-odt-num').value;
+  const fCuad = $('f-odt-cuad').value.toUpperCase();
+  const fEst = $('f-odt-estado').value;
+  const fLote = $('f-odt-lote').value;
+  let data = Object.values(S.odtsMap);
+  if (fOdt) data = data.filter(r=>r.odt.includes(fOdt));
+  if (fCuad) data = data.filter(r=>r.legajos.toUpperCase().includes(fCuad));
+  if (fEst) data = data.filter(r=>r.estadoOdt===fEst);
+  if (fLote) data = data.filter(r=>r.lote===fLote);
+  set('badge-odts-total', data.length.toLocaleString());
+
+  const estTag = e => ({
+    ok:'<span class="tag t-ok">✅ Conciliada</span>',
+    parcial:'<span class="tag t-warn">🟡 Parcial</span>',
+    faltante:'<span class="tag t-danger">🔴 Sin Obrador</span>',
+    fantasma:'<span class="tag t-danger">⚠ Fantasma</span>',
+  }[e]||`<span class="tag t-gray">${esc(e)}</span>`);
+
+  renderTable('tbl-odts','pag-odts',data,[
+    {label:'ODT', key:'odt', cls:'td-odt', render:r=>esc(r.odt)},
+    {label:'Estado', render:r=>estTag(r.estadoOdt)},
+    {label:'Estado AySA', render:r=>r.estadoAysa?`<span class="tag ${r.terminadoAysa?'t-ok':'t-gray'}">${esc(r.estadoAysa)}</span>`:'—'},
+    {label:'Cuadrillas', render:r=>esc(trunc(r.legajos,24))},
+    {label:'Mat. PSM', render:r=>`<span style="color:var(--blue)">${r.psmMats}</span>`},
+    {label:'Mat. OB', render:r=>`<span style="color:${r.obMats>=r.psmMats?'var(--ok)':'var(--danger)'}">${r.obMats}</span>`},
+    {label:'Cant. PSM', render:r=>r.psmQty.toFixed(0)},
+    {label:'Cant. OB', render:r=>`<span style="color:${Math.abs(r.psmQty-r.obQty)<0.5?'var(--ok)':'var(--danger)'}">${r.obQty.toFixed(0)}</span>`},
+    {label:'Medidor AySA', cls:'td-serie', render:r=>esc(r.medidorAysa)||'—'},
+    {label:'Lote', render:r=>esc(r.lote)||'—'},
+    {label:'Titular', render:r=>esc(trunc(r.titular,20))},
+    {label:'Localidad', render:r=>esc(r.localidad)||'—'},
+    {label:'Evidencia', render:r=>fotoBtn(r.fotos||[], r.gps)},
+  ],'odts');
+}
+
+// ---------- STOCK ----------
+function renderStock() {
+  const fCuad = $('f-stock-cuad').value.toUpperCase();
+  const fMat  = $('f-stock-mat').value.toUpperCase();
+  const fEst  = $('f-stock-est').value;
+  const fOrd  = $('f-stock-ord').value;
+  let crews = Object.values(S.stockCuadrillas);
+  if (fCuad) crews = crews.filter(c=>(c.legajo+' '+c.nombre).toUpperCase().includes(fCuad));
+  if (fEst === 'neg') crews = crews.filter(c=>c.stockTotal<0);
+  if (fEst === 'proy-neg') crews = crews.filter(c=>c.stockProy<0);
+  if (fEst === 'pendiente') crews = crews.filter(c=>c.totPend>0);
+  if (fOrd === 'pend-desc') crews.sort((a,b)=>b.totPend-a.totPend);
+  else if (fOrd === 'cuad-az') crews.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  else crews.sort((a,b)=>b.stockProy-a.stockProy);
+  const totSt = crews.reduce((s,c)=>s+c.stockTotal,0);
+  const totPend = crews.reduce((s,c)=>s+c.totPend,0);
+  const negProy = crews.filter(c=>c.stockProy<0).length;
+  kpiGrid('kpi-stock-top',[
+    {label:'Cuadrillas Activas',val:crews.length.toLocaleString(),cls:'ok',accent:'c-ok',sub:'con movimientos registrados'},
+    {label:'Stock Actual Total',val:Math.round(totSt).toLocaleString(),cls:'blue',accent:'c-blue',sub:'unidades en campo'},
+    {label:'Pendiente PSM',val:Math.round(totPend).toLocaleString(),cls:'yellow',accent:'c-yellow',sub:'por impactar en Obrador'},
+    {label:'Stock Proyectado',val:Math.round(totSt-totPend).toLocaleString(),cls:'ok',accent:'c-ok',sub:'una vez sincronizado'},
+    {label:'Proy. Negativo',val:negProy.toLocaleString(),cls:negProy>0?'danger':'ok',accent:negProy>0?'c-danger':'c-ok',sub:'cuadrillas en alerta'},
+  ]);
+  if (!crews.length) { $('stock-wrap').innerHTML = emptyState('Sin cuadrillas','Sin datos de stock para los filtros.'); return; }
+  let html = '';
+  crews.forEach(cs => {
+    let mats = Object.values(cs.mats);
+    if (fMat) mats = mats.filter(m=>(m.codigo+' '+m.desc).toUpperCase().includes(fMat));
+    if (!mats.length && fMat) return;
+    mats.sort((a,b)=>(b.pend||0)-(a.pend||0)||b.stock-a.stock);
+    const negT = cs.stockTotal<0, negP = cs.stockProy<0, hasPend = cs.totPend>0;
+    const hColor = negP?'var(--danger)':hasPend?'var(--yellow)':'var(--accent)';
+    html += `<div class="csb" data-csb="${esc(cs.legajo)}">
+      <div class="csb-head" data-csb-toggle="${esc(cs.legajo)}">
+        <div class="csb-meta">
+          <span class="csb-id" style="color:${hColor}">LEG ${esc(cs.legajo)}</span>
+          <span class="csb-name">${esc(cs.nombre||cs.legajo)}</span>
+          ${negP?'<span class="tag t-danger">⚠ PROY NEG</span>':''}
+          ${hasPend&&!negP?`<span class="tag t-yellow">⏳ ${Math.round(cs.totPend)} PEND</span>`:''}
+        </div>
+        <div class="csb-nums">
+          <div class="csb-kpi"><div class="csb-kpi-label">Enviado</div><div class="csb-kpi-val" style="color:var(--blue)">${Math.round(cs.totE).toLocaleString()}</div></div>
+          <div class="csb-kpi"><div class="csb-kpi-label">Consumido OB</div><div class="csb-kpi-val" style="color:var(--warn)">${Math.round(cs.totC).toLocaleString()}</div></div>
+          <div class="csb-kpi"><div class="csb-kpi-label">Devuelto</div><div class="csb-kpi-val" style="color:var(--text3)">${Math.round(cs.totD).toLocaleString()}</div></div>
+          <div class="csb-divider"></div>
+          <div class="csb-kpi"><div class="csb-kpi-label">Stock Actual</div><div class="csb-kpi-val" style="color:${negT?'var(--danger)':'var(--text)'}">${Math.round(cs.stockTotal).toLocaleString()}</div></div>
+          <div class="csb-kpi"><div class="csb-kpi-label">Pendiente PSM</div><div class="csb-kpi-val" style="color:${hasPend?'var(--yellow)':'var(--text3)'}">${Math.round(cs.totPend).toLocaleString()}</div></div>
+          <div class="csb-divider"></div>
+          <div class="csb-kpi"><div class="csb-kpi-label">Stock Proyectado</div><div class="csb-kpi-val" style="color:${negP?'var(--danger)':'var(--ok)'};font-size:17px">${Math.round(cs.stockProy).toLocaleString()}</div></div>
+          <span style="color:var(--text3);font-size:13px;margin-left:6px">▼</span>
+        </div>
+      </div>
+      <div data-csb-body="${esc(cs.legajo)}" style="display:none">
+        <table class="smt"><thead><tr>
+          <th>Código</th><th>Descripción</th>
+          <th>Enviado</th><th>Traslados</th><th>Devuelto</th><th>Consumido OB</th>
+          <th>Stock Actual</th><th>Pendiente PSM</th><th>Stock Proyectado</th>
+        </tr></thead><tbody>${mats.map(m=>{
+          const sA=m.stock, sP=m.proy, pe=m.pend||0;
+          const cA=sA<0?'var(--danger)':sA===0?'var(--text3)':'var(--ok)';
+          const cP=sP<0?'var(--danger)':sP===0?'var(--text3)':'var(--ok)';
+          return `<tr><td class="td-code">${esc(m.codigo)}</td><td class="td-main" style="white-space:normal;max-width:240px">${esc(m.desc||'—')}</td><td>${m.e||0}</td><td>${m.t||0}</td><td>${m.d||0}</td><td style="color:var(--warn)">${m.c||0}</td><td style="color:${cA};font-weight:700">${Math.round(sA)}</td><td style="color:${pe>0?'var(--yellow)':'var(--text3)'}">${pe>0?Math.round(pe):'—'}</td><td style="color:${cP};font-weight:700">${Math.round(sP)}</td></tr>`;
+        }).join('')}</tbody></table>
+      </div>
+    </div>`;
+  });
+  $('stock-wrap').innerHTML = html || emptyState('Sin resultados','Sin materiales para los filtros.');
+}
+
+// ---------- PANEL ----------
+function renderPanel(keepPage) {
+  if (!keepPage) S.pages.panel = 1;
+  const fCod = $('f-panel-cod').value.toUpperCase();
+  const fEst = $('f-panel-est').value;
+  let data = Object.values(S.stockPanel).sort((a,b)=>b.ing-a.ing);
+  if (fCod) data = data.filter(r=>(r.codigo+' '+r.desc).toUpperCase().includes(fCod));
+  if (fEst==='bajo') data = data.filter(r=>r.stock<=0);
+  if (fEst==='neg') data = data.filter(r=>r.stock<0);
+  renderTable('tbl-panel','pag-panel',data,[
+    {label:'Código', cls:'td-code', render:r=>esc(r.codigo)},
+    {label:'Descripción', cls:'td-main', render:r=>esc(trunc(r.desc,45))},
+    {label:'Ingresado Prov.', render:r=>r.ing},
+    {label:'Enviado Campo', render:r=>`<span style="color:var(--warn)">${r.env}</span>`},
+    {label:'Traslados', render:r=>r.tra},
+    {label:'Stock Pañol', render:r=>`<span style="font-weight:700;color:${r.stock<0?'var(--danger)':r.stock===0?'var(--text3)':'var(--ok)'}">${Math.round(r.stock).toLocaleString()}</span>`},
+  ],'panel');
+}
+
+// ---------- CONCILIADOS ----------
+function renderConciliados(keepPage) {
+  if (!keepPage) S.pages.conciliados = 1;
+  let data = [...S.conciliados];
+  const fOdt = $('f-conc-odt').value;
+  const fCuad = $('f-conc-cuad').value.toUpperCase();
+  const fCod = $('f-conc-cod').value;
+  if (fOdt) data = data.filter(r=>r.odt.includes(fOdt));
+  if (fCuad) data = data.filter(r=>(r.legajo+' '+r.cuadNombre).toUpperCase().includes(fCuad));
+  if (fCod) data = data.filter(r=>r.codigo.includes(fCod));
+  set('badge-conc-total', data.length.toLocaleString());
+  renderTable('tbl-conciliados','pag-conciliados',data,[
+    {label:'ODT', cls:'td-odt', render:r=>esc(r.odt)},
+    {label:'Código', cls:'td-code', render:r=>esc(r.codigo)},
+    {label:'Descripción', cls:'td-main', render:r=>esc(trunc(r.desc,38))},
+    {label:'Legajo', render:r=>esc(r.legajo)},
+    {label:'Cuadrilla', render:r=>esc(trunc(r.cuadNombre,22))},
+    {label:'Cant. PSM', render:r=>`<span class="td-ok">${r.cantPsm}</span>`},
+    {label:'Cant. OB', render:r=>`<span class="td-ok">${r.cantOb}</span>`},
+    {label:'Serie', cls:'td-serie', render:r=>esc(r.serie)||'—'},
+    {label:'Fecha', render:r=>esc(r.fecha)},
+    {label:'Estado', render:()=>'<span class="tag t-ok">✓ OK</span>'},
+  ],'conciliados');
+}
+
+// ---------- ANOMALÍAS ----------
+function renderAnomalias() {
+  const blocks = [
+    { id:'anom-crit', priority:'critical', label:'CRÍTICO', cls:'p-critical',
+      title:'Requieren Acción Inmediata',
+      count: S.faltantes.filter(f=>['T2','T6'].includes(f.tipo)).length + S.medidores.filter(m=>m.status==='sin_psm').length + S.medidores.filter(m=>m.status==='no_ob').length + S.medidores.filter(m=>m.status==='psm_sin_egreso_ob').length + S.errores.filter(e=>e.tipo==='T7B').length,
+      items:[
+        { title:'T2 — ODTs sin ningún impacto en Obrador', data:S.faltantes.filter(f=>f.tipo==='T2'), type:'faltante' },
+        { title:'T6 — Desvíos de Serie en Medidores', data:S.faltantes.filter(f=>f.tipo==='T6'), type:'faltante' },
+        { title:'Medidores consumidos en OB sin declaración PSM', data:S.medidores.filter(m=>m.status==='sin_psm'), type:'medidor' },
+        { title:'Medidores declarados en PSM sin ingreso en Obrador', data:S.medidores.filter(m=>m.status==='no_ob'), type:'medidor' },
+        { title:'Medidores declarados en PSM sin egreso registrado en Obrador', data:S.medidores.filter(m=>m.status==='psm_sin_egreso_ob'), type:'medidor' },
+        { title:'T7B — Error RC sin respaldo en Obrador (consumo no verificable)', data:S.errores.filter(e=>e.tipo==='T7B'), type:'error' },
+      ] },
+    { id:'anom-imp', priority:'important', label:'IMPORTANTE', cls:'p-important',
+      title:'Capa 2 — Faltantes RC vs Obrador',
+      count: S.faltantes.filter(f=>['T1','T3'].includes(f.tipo)).length,
+      items:[
+        { title:'T1 — ODTs parcialmente impactadas en Obrador', data:S.faltantes.filter(f=>f.tipo==='T1'), type:'faltante' },
+        { title:'T3 — Desvío Cuantitativo (RC declaró más que OB)', data:S.faltantes.filter(f=>f.tipo==='T3'), type:'faltante' },
+      ] },
+    { id:'anom-psm', priority:'important', label:'IMPORTANTE', cls:'p-important',
+      title:'Capa 1 — Desvíos PSM Interno (RC vs Reporte AySA)',
+      count: S.psmInterno.length,
+      items:[
+        { title:'PI1 — Consumo en RC sin confirmación en Reporte AySA', data:S.psmInterno.filter(d=>d.tipo==='PI1'), type:'psmInterno' },
+        { title:'PI2 — Reporte AySA declara ODT sin registro en RC', data:S.psmInterno.filter(d=>d.tipo==='PI2'), type:'psmInterno' },
+        { title:'PI3 — RC declara más cantidad que Reporte AySA', data:S.psmInterno.filter(d=>d.tipo==='PI3'), type:'psmInterno' },
+        { title:'PI4 — Reporte AySA declara más cantidad que RC', data:S.psmInterno.filter(d=>d.tipo==='PI4'), type:'psmInterno' },
+      ] },
+    { id:'anom-aysa', priority:'important', label:'IMPORTANTE', cls:'p-important',
+      title:'Capa 2c — Desvíos Reporte AySA ↔ Obrador',
+      count: S.desviosAysa.length,
+      items:[
+        { title:'DA3 — AySA declaró materiales sin ningún impacto en OB ni RC', data:S.desviosAysa.filter(d=>d.tipo==='DA3'), type:'aysa' },
+        { title:'DA1 — AySA declaró pero solo está en RC, no impactó OB', data:S.desviosAysa.filter(d=>d.tipo==='DA1'), type:'aysa' },
+        { title:'DA2 — AySA declaró cantidad diferente a lo registrado en OB', data:S.desviosAysa.filter(d=>d.tipo==='DA2'), type:'aysa' },
+      ] },
+    { id:'anom-cuad', priority:'review', label:'REVISAR', cls:'p-review',
+      title:'Capa 3a — Integridad de Cuadrillas por ODT',
+      count: S.multiCuadrilla.length + S.desviosCuadrilla.length,
+      items:[
+        { title:'MC1 — ODTs con materiales consumidos por 2 o más cuadrillas en Obrador', data:S.multiCuadrilla, type:'multiCuad' },
+        { title:'DC1 — Cuadrilla diferente entre RC y Obrador para la misma ODT', data:S.desviosCuadrilla, type:'desvCuad' },
+      ] },
+    { id:'anom-patron', priority:'review', label:'REVISAR', cls:'p-review',
+      title:'Capa 3c — Patrón de Instalación Incompleto (R11/R20)',
+      count: S.patronIncompleto.length,
+      items:[
+        { title:'ODTs R11/R20 sin materiales núcleo (Medidor+Precinto+Caja+Junta) — verificar con fotos', data:S.patronIncompleto, type:'patron' },
+      ] },
+    { id:'anom-dup', priority:'review', label:'REVISAR', cls:'p-review',
+      title:'Duplicados — Series y ODTs registradas múltiples veces',
+      count: S.duplicadosOb.length,
+      items:[
+        { title:'DUP1 — Series de medidor consumidas 2 o más veces en Obrador', data:S.duplicadosOb.filter(d=>d.tipo==='DUP1'), type:'dup' },
+        { title:'DUP2 — ODTs con ratio OB/RC = 2x o 3x en todas las líneas', data:S.duplicadosOb.filter(d=>d.tipo==='DUP2'), type:'dup' },
+      ] },
+    { id:'anom-rev', priority:'review', label:'REVISAR', cls:'p-review',
+      title:'Inconsistencias a Verificar',
+      count: S.excesos.length + S.errores.filter(e=>e.tipo==='T7A').length + S.medidores.filter(m=>m.status==='desvio_odt'||m.status==='desvio_cuad').length,
+      items:[
+        { title:'T4 — Consumos en Obrador sin declaración en RC', data:S.excesos, type:'exceso' },
+        { title:'T7A — Error RC con consumo verificado en Obrador (error administrativo)', data:S.errores.filter(e=>e.tipo==='T7A'), type:'error' },
+        { title:'Desvíos ODT/Cuadrilla en Medidores', data:S.medidores.filter(m=>m.status==='desvio_odt'||m.status==='desvio_cuad'), type:'medidor' },
+      ] },
+  ];
+  let html = '';
+  blocks.forEach(b => {
+    html += `<div class="anom-block" data-anom="${esc(b.id)}">
+      <div class="anom-head ${b.priority}" data-anom-toggle="${esc(b.id)}">
+        <span class="anom-priority ${b.cls}">${esc(b.label)}</span>
+        <span class="anom-title">${esc(b.title)}</span>
+        <span class="anom-count" style="color:${b.priority==='critical'?'var(--danger)':b.priority==='important'?'var(--warn)':'var(--yellow)'}">${b.count.toLocaleString()}</span>
+        <span style="color:var(--text3);font-size:13px">▶</span>
+      </div>
+      <div class="anom-body">`;
+    b.items.forEach(item => {
+      if (!item.data.length) return;
+      html += `<div style="border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--bg);flex-wrap:wrap;gap:8px">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${esc(item.title)} <span style="color:var(--text3)">(${item.data.length.toLocaleString()})</span></span>
+          <button class="btn" type="button" data-export-anom="${esc(item.type)}|${esc(item.title)}">⬇ Exportar</button>
+        </div>
+        <div class="table-wrap">`;
+      if (item.type==='faltante')        html += anomTableFaltante(item.data.slice(0,50));
+      else if (item.type==='medidor')   html += anomTableMedidor(item.data.slice(0,50));
+      else if (item.type==='aysa')      html += anomTableAysa(item.data.slice(0,50));
+      else if (item.type==='patron')    html += anomTablePatron(item.data.slice(0,50));
+      else if (item.type==='dup')       html += anomTableDup(item.data.slice(0,50));
+      else if (item.type==='psmInterno')html += anomTablePsmInterno(item.data.slice(0,50));
+      else if (item.type==='multiCuad') html += anomTableMultiCuad(item.data.slice(0,50));
+      else if (item.type==='desvCuad')  html += anomTableDesvCuad(item.data.slice(0,50));
+      else if (item.type==='error')      html += anomTableError(item.data.slice(0,50));
+      else                               html += anomTableGeneric(item.data.slice(0,50));
+      if (item.data.length > 50) html += `<div style="padding:10px 18px;font-family:var(--mono);font-size:11px;color:var(--text3)">Mostrando 50 de ${item.data.length.toLocaleString()} — Exportar para ver todos</div>`;
+      html += `</div></div>`;
+    });
+    html += `</div></div>`;
+  });
+  $('anom-page-content').innerHTML = html;
+}
+function anomTableFaltante(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Legajo</th><th>Cuadrilla</th><th>PSM</th><th>Obrador</th><th>Δ</th><th>Serie</th><th>Estado AySA</th><th>AySA Confirma</th><th>Evidencia</th><th>Score</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    const aTag = r.tipo==='T2'?'t-danger':r.tipo==='T6'?'t-danger':r.tipo==='T3'?'t-yellow':'t-warn';
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag ${aTag}">${esc(r.tipo)}</span></td><td class="td-code">${esc(r.codigo)}</td><td class="td-main">${esc(trunc(r.desc,30))}</td><td>${esc(r.legajo)}</td><td>${esc(trunc(r.cuadNombre,18))}</td><td>${r.cantPsm}</td><td>${r.cantOb}</td><td class="td-danger">${r.delta?.toFixed?r.delta.toFixed(0):r.delta}</td><td class="td-serie">${esc(r.serie)||'—'}</td><td>${r.aysaEstado?`<span class="tag ${r.aysaTerminado?'t-ok':'t-gray'}">${esc(r.aysaEstado)}</span>`:'—'}</td><td>${r.aysaConfirma?`<span class="tag t-ok">✓ AySA=${r.aysaQty}</span>`:'<span class="tag t-gray">—</span>'}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td><td>${esc(r.scoreLabel)||'—'}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableMedidor(data) {
+  let h='<table><thead><tr><th>Serie</th><th>Estado</th><th>ODT Obrador</th><th>ODT PSM</th><th>Legajo OB</th><th>Cuadrilla</th><th>Lote</th><th>Evidencia</th><th>Score</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    h+=`<tr><td class="td-serie">${esc(r.serie)}</td><td><span class="tag ${statusTagClass(r.status)}">${esc(r.statusLabel)}</span></td><td class="td-odt">${esc(r.odtOb)||'—'}</td><td class="td-odt" style="color:${r.odtPsm===r.odtOb?'var(--ok)':'var(--danger)'}">${esc(r.odtPsm)||'—'}</td><td>${esc(r.legajoOb)}</td><td>${esc(trunc(r.cuadNombreOb,18))}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.fotos||[], r.gps)}</td><td><span class="score score-${r.score}">${r.score}/4</span></td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableAysa(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Código</th><th>AySA</th><th>PSM-RC</th><th>Obrador</th><th>Δ</th><th>Estado</th><th>Lote</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    const tCls = r.tipo==='DA3'?'t-danger':r.tipo==='DA1'?'t-warn':'t-blue';
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag ${tCls}">${esc(r.tipo)}</span></td><td class="td-code">${esc(r.codigo)}</td><td>${r.cantAysa}</td><td>${r.cantPsm}</td><td style="color:${r.cantOb<r.cantAysa?'var(--danger)':'var(--ok)'}">${r.cantOb}</td><td class="td-danger">${r.delta?.toFixed?r.delta.toFixed(0):r.delta}</td><td>${r.estado?`<span class="tag t-gray">${esc(r.estado)}</span>`:'—'}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTablePatron(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Estado</th><th>Materiales Faltantes del Núcleo</th><th>Lote</th><th>Titular</th><th>Dirección</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    const matsFaltDesc = r.materialesFaltantes.map(c=>NUCLEO_DESC[c]||c).join(', ');
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag t-ok">${esc(r.estado)}</span></td><td style="color:var(--warn);font-weight:600">${esc(matsFaltDesc)}</td><td>${esc(r.lote)||'—'}</td><td>${esc(trunc(r.titular,20))}</td><td>${esc(trunc(r.direccion,22))}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableDup(data) {
+  let h='<table><thead><tr><th>Tipo</th><th>ODT / Serie</th><th>Detalle</th><th>Estado</th><th>Lote</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    if (r.tipo==='DUP1') {
+      h+=`<tr><td><span class="tag t-danger">DUP1</span></td><td class="td-serie">${esc(r.serie)}</td><td style="font-family:var(--mono);font-size:11px">Consumida ${r.veces}x · ODTs: ${esc(r.odt)} · Legajos: ${esc(r.legajos)}</td><td>—</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], '')}</td></tr>`;
+    } else {
+      h+=`<tr><td><span class="tag t-warn">DUP2</span></td><td class="td-odt">${esc(r.odt)}</td><td>${r.ratio}x duplicado · ${r.lineas} líneas</td><td>${r.estado?`<span class="tag t-gray">${esc(r.estado)}</span>`:'—'}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], '')}</td></tr>`;
+    }
+  });
+  return h+'</tbody></table>';
+}
+function anomTablePsmInterno(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Legajo</th><th>Cuadrilla</th><th>Cant RC</th><th>Cant AySA</th><th>Δ</th><th>Lote</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    const tCls = (r.tipo==='PI1'||r.tipo==='PI2')?'t-danger':'t-warn';
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag ${tCls}">${esc(r.tipo)}</span></td><td class="td-code">${esc(r.codigo)}</td><td class="td-main">${esc(trunc(r.desc,30))}</td><td>${esc(r.legajo)||'—'}</td><td>${esc(trunc(r.cuadNombre,18))||'—'}</td><td>${r.cantRc}</td><td>${r.cantAysa}</td><td class="td-danger">${typeof r.delta==='number'?r.delta.toFixed(0):r.delta}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableMultiCuad(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Cant. Cuadrillas</th><th>Cuadrillas</th><th>Estado</th><th>Lote</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag t-danger">${esc(r.tipo)}</span></td><td style="text-align:center;font-weight:700;color:var(--danger)">${r.cantCuadrillas}</td><td style="font-family:var(--mono);font-size:11px">${esc(r.cuadrillas)}</td><td>${r.estado?`<span class="tag t-gray">${esc(r.estado)}</span>`:'—'}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableDesvCuad(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Solo en RC</th><th>Solo en OB</th><th>Estado</th><th>Lote</th><th>Evidencia</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    h+=`<tr><td class="td-odt">${esc(r.odt)}</td><td><span class="tag t-purple">${esc(r.tipo)}</span></td><td style="color:var(--warn);font-family:var(--mono);font-size:11px">${esc(r.soloEnPsm)||'—'}</td><td style="color:var(--blue);font-family:var(--mono);font-size:11px">${esc(r.soloEnOb)||'—'}</td><td>${r.estado?`<span class="tag t-gray">${esc(r.estado)}</span>`:'—'}</td><td>${esc(r.lote)||'—'}</td><td>${fotoBtn(r.infFotos||[], r.infGps)}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableError(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Subtipo</th><th>Código</th><th>Descripción</th><th>Legajo</th><th>Remito Inválido</th><th>Verificado OB</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    const tTag = r.tipo==='T7B' ? 't-danger' : 't-gray';
+    const obLabel = r.verificadoOb
+      ? '<span class="tag t-ok">✓ Consumo en OB</span>'
+      : '<span class="tag t-danger">✗ Sin respaldo OB</span>';
+    h+=`<tr><td class="td-odt">${esc(r.odt)||'—'}</td><td><span class="tag ${tTag}">${esc(r.tipo)}</span></td><td class="td-code">${esc(r.codigo)||'—'}</td><td class="td-main">${esc(trunc(r.desc||'',30))}</td><td>${esc(r.legajo)||'—'}</td><td style="font-family:var(--mono);font-size:11px;color:var(--danger)">${esc(r.remito||r.obs||'—')}</td><td>${obLabel}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableGeneric(data) {
+  let h='<table><thead><tr><th>ODT</th><th>Tipo</th><th>Código</th><th>Descripción</th><th>Legajo</th><th>Cant OB</th><th>Cant PSM</th><th>Info</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    h+=`<tr><td class="td-odt">${esc(r.odt)||'—'}</td><td><span class="tag t-blue">${esc(r.tipo)||'T7'}</span></td><td class="td-code">${esc(r.codigo)||'—'}</td><td class="td-main">${esc(trunc(r.desc||r.obs||'',30))}</td><td>${esc(r.legajo||r.legajoOb)||'—'}</td><td>${r.cantOb??r.qty??'—'}</td><td>${r.cantPsm??'—'}</td><td style="font-size:10px;color:var(--text3)">${esc(trunc(r.obs||r.remito||'',40))}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+
+// ---------- PATRONES DE INSTALACION ----------
+function describePatternCodes(codigos) {
+  const labels = codigos.map(c => NUCLEO_DESC[c] || c).join(' + ');
+  return labels.length > 80 ? labels.substring(0,77)+'…' : labels;
+}
+function renderPatrones(keepPage) {
+  if (!keepPage) S.pages.patrones = 1;
+  const names = getPatternNames();
+  const total = S.patrones.length;
+  const totalOdts = Object.keys(S.patronOdtMap).length;
+  const top = S.patrones.slice(0, 20);
+  const sinNombre = S.patrones.filter(p => !names[p.sig]).length;
+  const conNombre = total - sinNombre;
+  const con4 = S.patrones.filter(p => PATRON_NUCLEO.every(c => p.codigos.includes(c)));
+  const odtsCon4 = con4.reduce((s,p)=>s+p.count,0);
+
+  kpiGrid('kpi-pat-top',[
+    {label:'Patrones únicos',val:total.toLocaleString(),cls:'blue',accent:'c-blue',sub:'combinaciones distintas de materiales'},
+    {label:'ODTs clasificadas',val:totalOdts.toLocaleString(),cls:'ok',accent:'c-ok',sub:'con al menos un consumo en OB'},
+    {label:'Con patrón completo',val:odtsCon4.toLocaleString(),cls:'ok',accent:'c-ok',sub:'incluyen núcleo Medidor+Precinto+Caja+Junta'},
+    {label:'Patrones nombrados',val:conNombre.toLocaleString(),cls:'yellow',accent:'c-yellow',sub:sinNombre+' sin nombre'},
+    {label:'Top patrón',val:(top[0]?.count||0).toLocaleString(),cls:'purple',accent:'c-purple',sub:'ODTs en el patrón más frecuente'},
+  ]);
+
+  let html = '<table><thead><tr><th>#</th><th>Nombre</th><th>Materiales</th><th>Códigos</th><th>ODTs</th><th>Acción</th></tr></thead><tbody>';
+  top.forEach((p, idx) => {
+    const nombre = names[p.sig] || '';
+    const matDesc = describePatternCodes(p.codigos);
+    const completo = PATRON_NUCLEO.every(c => p.codigos.includes(c));
+    html += '<tr><td>' + (idx+1) + (completo ? ' <span class="tag t-ok" style="margin-left:6px">núcleo</span>' : '') + '</td>' +
+      '<td><input class="fi pat-name-input" data-sig="' + esc(p.sig) + '" value="' + esc(nombre) + '" placeholder="(sin nombre)" style="width:200px"></td>' +
+      '<td class="td-main" style="white-space:normal;max-width:340px">' + esc(matDesc) + '</td>' +
+      '<td class="td-code" style="font-size:10px">' + esc(p.codigos.slice(0,4).join(', ')) + (p.codigos.length>4?(' +'+(p.codigos.length-4)):'') + '</td>' +
+      '<td><strong>' + p.count.toLocaleString() + '</strong></td>' +
+      '<td><button class="btn" type="button" data-pat-filter="' + esc(p.sig) + '">Ver ODTs</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  $('tbl-patrones').innerHTML = html;
+
+  const fOdt = $('f-pat-odt').value;
+  const fCuad = $('f-pat-cuad').value.toUpperCase();
+  const fName = $('f-pat-name').value;
+  const fEst = $('f-pat-estado').value;
+  let data = Object.values(S.odtsMap).filter(o => S.patronOdtMap[o.odt]);
+  if (fOdt) data = data.filter(o => o.odt.includes(fOdt));
+  if (fCuad) data = data.filter(o => o.legajos.toUpperCase().includes(fCuad));
+  if (fName) data = data.filter(o => S.patronOdtMap[o.odt]===fName);
+  if (fEst) data = data.filter(o => o.estadoAysa===fEst);
+  data = data.map(o => ({ ...o, patSig: S.patronOdtMap[o.odt], patName: names[S.patronOdtMap[o.odt]] || ('Patrón ' + S.patronOdtMap[o.odt].substring(0,8)) }));
+  data.sort((a,b)=>a.patName.localeCompare(b.patName)||a.odt.localeCompare(b.odt));
+
+  renderTable('tbl-patrones-odts','pag-patrones', data, [
+    {label:'ODT', cls:'td-odt', render:r=>esc(r.odt)},
+    {label:'Patrón', render:r=>'<span class="tag '+(names[r.patSig]?'t-ok':'t-gray')+'">'+esc(r.patName)+'</span>'},
+    {label:'Estado AySA', render:r=>r.estadoAysa?('<span class="tag '+(r.terminadoAysa?'t-ok':'t-gray')+'">'+esc(r.estadoAysa)+'</span>'):'—'},
+    {label:'Cuadrillas', render:r=>esc(trunc(r.legajos,24))},
+    {label:'Mat. OB', render:r=>r.obMats},
+    {label:'Cant. OB', render:r=>r.obQty.toFixed(0)},
+    {label:'Lote', render:r=>esc(r.lote)||'—'},
+    {label:'Titular', render:r=>esc(trunc(r.titular,20))},
+    {label:'Localidad', render:r=>esc(r.localidad)||'—'},
+    {label:'Evidencia', render:r=>fotoBtn(r.fotos||[], r.gps)},
+  ], 'patrones');
+}
+
+// ---------- FOTOS / MODAL ----------
+function fotoBtn(fotos, gps) {
+  let btns = '';
+  if (fotos && fotos.length > 0) {
+    const id = ++S.fotosCounter;
+    S.fotosStore.set(id, fotos);
+    const label = fotos.length > 1 ? `📷 ${fotos.length}` : '📷';
+    btns += `<button class="photo-btn" type="button" data-fotos-id="${id}">${label}</button> `;
+  }
+  const u = safeUrl(gps);
+  if (u && u.includes('maps')) btns += `<a href="${esc(u)}" target="_blank" rel="noopener" class="photo-btn gps-btn">📍</a>`;
+  return btns || '—';
+}
+function showFotos(fotos) {
+  const body = fotos.map((url,i) => {
+    const u = safeUrl(url);
+    return `<div style="margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:4px">Foto ${i+1} de ${fotos.length}</div>
+      ${u?`<img src="${esc(u)}" alt="Foto ${i+1}" style="width:100%;border-radius:6px;border:1px solid var(--border2)" onerror="this.style.display='none'">`:'<div style="color:var(--text3)">URL inválida</div>'}
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px;word-break:break-all">${esc(url)}</div>
+    </div>`;
+  }).join('');
+  openModal(`Evidencia fotográfica — ${fotos.length} imagen${fotos.length>1?'es':''}`, body);
+}
+function openModal(title, html) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = html;
+  $('modal-overlay').classList.add('open');
+}
+function closeModal() { $('modal-overlay').classList.remove('open'); }
+
+// ---------- EXPORTS ----------
+function exportSheet(type) {
+  if (!S.processed) { showToast('Primero ejecute la auditoría.','error'); return; }
+  try {
+    const wb = XLSX.utils.book_new();
+    const today = new Date().toISOString().split('T')[0];
+    const exporters = {
+      medidores:()=>{ const d=S.medidores.map(m=>({Serie:m.serie,Estado:m.statusLabel,'Score':m.score+'/4','ODT Obrador':m.odtOb,'ODT PSM':m.odtPsm,'ODT AySA':m.odtAysa,Legajo:m.legajoOb,Cuadrilla:m.cuadNombreOb,Lote:m.lote,Titular:m.titular,'Dirección':m.direccion,Localidad:m.localidad,'Foto URL':m.foto,'GPS URL':m.gps,'Estado AySA':m.estadoAysa})); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),'Medidores'); return 'AuditorPro_Medidores'; },
+      odts:()=>{ const d=Object.values(S.odtsMap).map(r=>({ODT:r.odt,Estado:r.estadoOdt,'Estado AySA':r.estadoAysa,Cuadrillas:r.legajos,'Mat PSM':r.psmMats,'Mat OB':r.obMats,'Cant PSM':r.psmQty,'Cant OB':r.obQty,Lote:r.lote,Titular:r.titular,'Dirección':r.direccion,Localidad:r.localidad,'Medidor AySA':r.medidorAysa,'Foto URL':r.foto})); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),'ODTs'); return 'AuditorPro_ODTs'; },
+      stock:()=>{ const rows=[]; Object.values(S.stockCuadrillas).forEach(cs=>Object.values(cs.mats).forEach(m=>rows.push({Legajo:cs.legajo,Cuadrilla:cs.nombre,'Código':m.codigo,'Descripción':m.desc,Enviado:m.e,Traslados:m.t,Devuelto:m.d,'Consumido OB':m.c,'Stock Actual':Math.round(m.stock),'Pendiente PSM':Math.round(m.pend||0),'Stock Proyectado':Math.round(m.proy)}))); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Stock'); return 'AuditorPro_Stock'; },
+      panel:()=>{ const d=Object.values(S.stockPanel).map(p=>({'Código':p.codigo,'Descripción':p.desc,'Ingresado Prov.':p.ing,'Enviado Campo':p.env,Traslados:p.tra,'Stock Pañol':Math.round(p.stock)})); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),'Panel Pañol'); return 'AuditorPro_Panel_Panol'; },
+      conciliados:()=>{ const d=S.conciliados.map(r=>({ODT:r.odt,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant PSM':r.cantPsm,'Cant OB':r.cantOb,Serie:r.serie,Motivo:r.motivo,Fecha:r.fecha})); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),'Conciliados'); return 'AuditorPro_Conciliados'; },
+      patrones:()=>{
+        const names = getPatternNames();
+        const top = S.patrones.map((p,idx)=>({Rank:idx+1, Nombre:names[p.sig]||'', Materiales:describePatternCodes(p.codigos), 'Códigos':p.codigos.join(', '), ODTs:p.count, 'Núcleo Completo':PATRON_NUCLEO.every(c=>p.codigos.includes(c))?'SI':'NO'}));
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(top),'Patrones');
+        const detail = Object.entries(S.patronOdtMap).map(([odt,sig])=>{
+          const o = S.odtsMap[odt]||{};
+          return {ODT:odt, Patrón:names[sig]||('Patrón '+sig.substring(0,8)), 'Códigos':sig, Estado:o.estadoOdt, 'Estado AySA':o.estadoAysa, Lote:o.lote, Cuadrillas:o.legajos, Titular:o.titular, 'Dirección':o.direccion, Localidad:o.localidad};
+        });
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detail),'ODTs por Patron');
+        return 'AuditorPro_Patrones';
+      },
+      anomalias:()=>{
+        const falt=S.faltantes.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant PSM':r.cantPsm,'Cant OB':r.cantOb,'Δ Faltante':r.delta,Serie:r.serie||'','Estado AySA':r.aysaEstado,'AySA Confirma':r.aysaConfirma?'SI':'NO','Foto OK':r.infFotoOk?'SI':'NO','GPS OK':r.infGpsOk?'SI':'NO',Score:r.scoreLabel,'Observación':r.obs}));
+        const exc=S.excesos.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant PSM':r.cantPsm,'Cant OB':r.cantOb,'Δ Exceso':r.delta,'Observación':r.obs}));
+        const err=S.errores.map(r=>({ODT:r.odt,Subtipo:r.tipo,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,'Error Remito':r.remito,'Verificado OB':r.verificadoOb?'SI':'NO',Motivo:r.motivo}));
+        const aysa=S.desviosAysa.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,'Cant AySA':r.cantAysa,'Cant OB':r.cantOb,'Cant PSM':r.cantPsm,'Δ':r.delta,Estado:r.estado,Lote:r.lote}));
+        const dup=S.duplicadosOb.map(r=>r.tipo==='DUP1'?{Tipo:r.tipo,Serie:r.serie,ODTs:r.odt,Legajos:r.legajos,Veces:r.veces,Lote:r.lote}:{Tipo:r.tipo,ODT:r.odt,Ratio:r.ratio+'x',Lineas:r.lineas,Estado:r.estado,Lote:r.lote});
+        const pat=S.patronIncompleto.map(r=>({ODT:r.odt,Estado:r.estado,'Materiales Faltantes':r.materialesFaltantes.map(c=>NUCLEO_DESC[c]||c).join(', '),Lote:r.lote,Titular:r.titular,'Dirección':r.direccion}));
+        const pi=S.psmInterno.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant RC':r.cantRc,'Cant AySA':r.cantAysa,'Δ':r.delta,Lote:r.lote,Observación:r.obs}));
+        const mc=S.multiCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Cant Cuadrillas':r.cantCuadrillas,Cuadrillas:r.cuadrillas,Estado:r.estado,Lote:r.lote}));
+        const dc=S.desviosCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Solo en RC':r.soloEnPsm,'Solo en OB':r.soloEnOb,Estado:r.estado,Lote:r.lote}));
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(falt),'Faltantes');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(exc),'Excesos');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(err),'Errores RC');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pi),'PSM Interno');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(aysa),'Desvios AySA');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mc),'Multi-Cuadrilla');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dc),'Desv Cuadrilla');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dup),'Duplicados OB');
+        XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pat),'Patron Incompleto');
+        return 'AuditorPro_Anomalias';
+      },
+    };
+    if (!exporters[type]) return;
+    const fname = exporters[type]();
+    safeDownload(wb, `${fname}_${today}.xlsx`);
+    showToast('Excel exportado correctamente.','success');
+  } catch(err) {
+    console.error(err);
+    showToast('Error exportando: '+err.message,'error');
+  }
+}
+function exportAnomItem(type, title) {
+  try {
+    const wb = XLSX.utils.book_new();
+    const today = new Date().toISOString().split('T')[0];
+    let data = []; let sheetName = 'Anomalias';
+    if (type==='faltante') { data=S.faltantes.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant PSM':r.cantPsm,'Cant OB':r.cantOb,'Δ':r.delta,Serie:r.serie||'',Motivo:r.motivo,Fecha:r.fecha,'Estado AySA':r.aysaEstado,Observación:r.obs})); sheetName='Faltantes'; }
+    else if (type==='medidor') { data=S.medidores.map(m=>({Serie:m.serie,Estado:m.statusLabel,'ODT OB':m.odtOb,'ODT PSM':m.odtPsm,'ODT AySA':m.odtAysa,Legajo:m.legajoOb,Cuadrilla:m.cuadNombreOb,Lote:m.lote,Titular:m.titular,Dirección:m.direccion,Localidad:m.localidad,'Foto URL':m.foto,'GPS URL':m.gps})); sheetName='Medidores'; }
+    else if (type==='exceso') { data=S.excesos.map(r=>({ODT:r.odt,'Código':r.codigo,'Descripción':r.desc,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant OB':r.cantOb,'Cant PSM':r.cantPsm,'Observación':r.obs})); sheetName='Excesos'; }
+    else if (type==='aysa') { data=S.desviosAysa.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,Código:r.codigo,'Cant AySA':r.cantAysa,'Cant OB':r.cantOb,'Cant PSM':r.cantPsm,Estado:r.estado,Lote:r.lote})); sheetName='Desvios AySA'; }
+    else if (type==='patron') { data=S.patronIncompleto.map(r=>({ODT:r.odt,Estado:r.estado,'Materiales Faltantes':r.materialesFaltantes.map(c=>NUCLEO_DESC[c]||c).join(', '),Lote:r.lote,Titular:r.titular,Dirección:r.direccion})); sheetName='Patron Incompleto'; }
+    else if (type==='dup') { data=S.duplicadosOb.map(r=>r.tipo==='DUP1'?{Tipo:r.tipo,Serie:r.serie,ODTs:r.odt,Legajos:r.legajos,Veces:r.veces,Lote:r.lote}:{Tipo:r.tipo,ODT:r.odt,Ratio:r.ratio+'x',Lineas:r.lineas,Estado:r.estado,Lote:r.lote}); sheetName='Duplicados'; }
+    else if (type==='psmInterno') { data=S.psmInterno.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant RC':r.cantRc,'Cant AySA':r.cantAysa,Lote:r.lote,Observación:r.obs})); sheetName='PSM Interno'; }
+    else if (type==='multiCuad') { data=S.multiCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Cant Cuadrillas':r.cantCuadrillas,Cuadrillas:r.cuadrillas,Estado:r.estado,Lote:r.lote})); sheetName='Multi-Cuadrilla'; }
+    else if (type==='desvCuad') { data=S.desviosCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Solo en RC':r.soloEnPsm,'Solo en OB':r.soloEnOb,Estado:r.estado,Lote:r.lote})); sheetName='Desv Cuadrilla'; }
+    else { data=S.errores.map(r=>({ODT:r.odt,Subtipo:r.tipo,'Código':r.codigo,Descripción:r.desc,Legajo:r.legajo,'Error':r.remito,'Verificado OB':r.verificadoOb?'SI':'NO',Motivo:r.motivo})); sheetName='Errores'; }
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),sheetName);
+    safeDownload(wb, `AuditorPro_${sheetName.replace(/\s/g,'_')}_${today}.xlsx`);
+    showToast('Exportado: '+sheetName,'success');
+  } catch(err) { showToast('Error: '+err.message,'error'); }
+}
+
+// ---------- EVENT DELEGATION ----------
+document.addEventListener('click', e => {
+  // Nav
+  const navBtn = e.target.closest('.nav-item[data-page]');
+  if (navBtn) { goPage(navBtn.dataset.page); return; }
+  // Pagination
+  const pagBtn = e.target.closest('.pag-btn[data-pag]');
+  if (pagBtn && !pagBtn.disabled) {
+    const k = pagBtn.dataset.pag;
+    if (pagBtn.dataset.action === 'prev') S.pages[k] = Math.max(1,(S.pages[k]||1)-1);
+    else if (pagBtn.dataset.action === 'next') S.pages[k] = (S.pages[k]||1)+1;
+    else if (pagBtn.dataset.page) S.pages[k] = parseInt(pagBtn.dataset.page,10);
+    rerender(k);
+    return;
+  }
+  // Export
+  const exBtn = e.target.closest('[data-export]');
+  if (exBtn) { exportSheet(exBtn.dataset.export); return; }
+  const exAnom = e.target.closest('[data-export-anom]');
+  if (exAnom) { const [type, ...rest] = exAnom.dataset.exportAnom.split('|'); exportAnomItem(type, rest.join('|')); return; }
+  // Fotos
+  const fotoBtnEl = e.target.closest('[data-fotos-id]');
+  if (fotoBtnEl) { const fotos = S.fotosStore.get(parseInt(fotoBtnEl.dataset.fotosId,10)); if (fotos) showFotos(fotos); return; }
+  // CSB toggle
+  const csbHead = e.target.closest('[data-csb-toggle]');
+  if (csbHead) {
+    const id = csbHead.dataset.csbToggle;
+    const body = document.querySelector(`[data-csb-body="${CSS.escape(id)}"]`);
+    if (body) body.style.display = body.style.display==='none' ? '' : 'none';
+    return;
+  }
+  // Anom toggle
+  const anomHead = e.target.closest('[data-anom-toggle]');
+  if (anomHead) {
+    const block = document.querySelector(`[data-anom="${CSS.escape(anomHead.dataset.anomToggle)}"]`);
+    if (block) block.classList.toggle('expanded');
+    const arr = anomHead.querySelector('span:last-child');
+    if (arr) arr.textContent = block.classList.contains('expanded') ? '▼' : '▶';
+    return;
+  }
+  // Process button
+  if (e.target.id === 'btn-process') runAudit();
+  if (e.target.id === 'btn-reset') resetAll();
+  if (e.target.id === 'btn-restore') { const snap=loadStateLocal(); if (snap) { restoreFromSnap(snap); $('restore-banner').style.display='none'; } }
+  if (e.target.id === 'btn-discard') { clearStateLocal(); $('restore-banner').style.display='none'; showToast('Sesión anterior descartada.','warn'); }
+  const patFilterBtn = e.target.closest('[data-pat-filter]');
+  if (patFilterBtn) { $('f-pat-name').value = patFilterBtn.dataset.patFilter; renderPatrones(); window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'}); return; }
+  // Modal close
+  if (e.target.id === 'modal-close-btn' || e.target.id === 'modal-overlay') closeModal();
+  // Row click → detalle
+  const tr = e.target.closest('tr[data-row-key]');
+  if (tr && !e.target.closest('a, button')) {
+    const [pageKey, ridxStr] = tr.dataset.rowKey.split('|');
+    showRowDetail(pageKey, parseInt(ridxStr,10));
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+document.addEventListener('change', e => {
+  const inp = e.target.closest('.pat-name-input');
+  if (inp) {
+    savePatternName(inp.dataset.sig, inp.value.trim());
+    populatePatternFilters();
+    showToast('Nombre de patrón guardado.','success');
+  }
+});
+
+// Filter inputs delegation
+document.querySelectorAll('[data-filter-group]').forEach(grp => {
+  const group = grp.dataset.filterGroup;
+  grp.addEventListener('input', () => {
+    if (group==='med') renderMedidores();
+    else if (group==='odts') renderOdts();
+    else if (group==='stock') renderStock();
+    else if (group==='panel') renderPanel();
+    else if (group==='conc') renderConciliados();
+  });
+  grp.addEventListener('change', () => {
+    if (group==='med') renderMedidores();
+    else if (group==='odts') renderOdts();
+    else if (group==='stock') renderStock();
+    else if (group==='panel') renderPanel();
+    else if (group==='conc') renderConciliados();
+  });
+});
+
+// File inputs
+$('file-ob1').addEventListener('change', e => loadFile('ob1', e.target.files[0]));
+$('file-ob2').addEventListener('change', e => loadFile('ob2', e.target.files[0]));
+$('file-psm').addEventListener('change', e => loadFile('psm', e.target.files[0]));
+$('file-aysa').addEventListener('change', e => loadFile('aysa', e.target.files[0]));
+$('file-inf').addEventListener('change', e => loadFileMulti('inf', e.target.files));
+
+// Drag & drop
+['ob1','ob2','psm','aysa'].forEach(type => {
+  const z = $('zone-'+type);
+  if (!z) return;
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag'); });
+  z.addEventListener('dragleave', () => z.classList.remove('drag'));
+  z.addEventListener('drop', e => {
+    e.preventDefault(); z.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(type, file);
+  });
+});
+const zInf = $('zone-inf');
+if (zInf) {
+  zInf.addEventListener('dragover', e => { e.preventDefault(); zInf.classList.add('drag'); });
+  zInf.addEventListener('dragleave', () => zInf.classList.remove('drag'));
+  zInf.addEventListener('drop', e => { e.preventDefault(); zInf.classList.remove('drag'); if (e.dataTransfer.files.length) loadFileMulti('inf', e.dataTransfer.files); });
+}
+
+// ---------- ROW DETAIL ----------
+function showRowDetail(pageKey, ridx) {
+  let row;
+  if (pageKey==='medidores') row = S.medidores[ridx];
+  else if (pageKey==='odts') row = Object.values(S.odtsMap)[ridx];
+  else if (pageKey==='conciliados') row = S.conciliados[ridx];
+  else if (pageKey==='panel') row = Object.values(S.stockPanel)[ridx];
+  if (!row) return;
+  const body = '<dl class="modal-kv">' + Object.entries(row).filter(([k,v])=>{
+    if (k==='fotos' || k==='mats') return false;
+    if (v===null || v===undefined || v==='' || (Array.isArray(v) && !v.length)) return false;
+    return true;
+  }).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${typeof v==='boolean'?(v?'Sí':'No'):esc(String(v))}</dd>`).join('') + '</dl>';
+  openModal(`Detalle — ${pageKey}`, body);
+}
+
+// Banner de restauracion si hay sesion anterior
+checkRestoreOnLoad();
+console.log('AuditorPro EMA v5.0 cargado correctamente.');
+</script>
+</body>
+</html>
