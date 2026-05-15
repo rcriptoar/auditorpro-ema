@@ -655,7 +655,7 @@ tbody tr:hover td{background:rgba(56,139,253,.06);cursor:pointer}
       <option value="ok">✅ Conciliada completa</option>
       <option value="parcial">🟡 Parcialmente conciliada</option>
       <option value="faltante">🔴 Sin impacto Obrador</option>
-      <option value="fantasma">⚠ R11 sin ningún registro</option>
+      <option value="sin_iniciar">⏸ Sin Iniciar (sin OB ni RC)</option>
     </select>
     <select class="fi" id="f-odt-lote"><option value="">Todos los lotes</option></select>
   </div>
@@ -1638,6 +1638,26 @@ async function runAuditInternal() {
       veces:rows.length, lote:inf?.lote||'', infFotos:inf?.fotos||[] });
   });
 
+  // ---- 6b-T8. Series cruzadas en RC (mismo medidor declarado bajo 2+ ODTs en PSM) ----
+  const psmSerieAll = {};
+  S.psmNorm.filter(p=>p.codigo===COD_MEDIDOR && p.serie && p.odt).forEach(p => {
+    if (!psmSerieAll[p.serie]) psmSerieAll[p.serie] = [];
+    if (!psmSerieAll[p.serie].find(r=>r.odt===p.odt)) psmSerieAll[p.serie].push(p);
+  });
+  S.seriesCruzadas = [];
+  Object.entries(psmSerieAll).forEach(([serie, rows]) => {
+    if (rows.length < 2) return;
+    S.seriesCruzadas.push({
+      tipo:'T8', tipoLabel:'T8 — Serie cruzada en RC (mismo medidor en 2+ ODTs)',
+      serie,
+      odts: rows.map(r=>r.odt).join(' / '),
+      legajos: [...new Set(rows.map(r=>r.legajo||''))].filter(Boolean).join(', '),
+      cuads: [...new Set(rows.map(r=>r.cuadNombre||''))].filter(Boolean).join(' | '),
+      fechas: [...new Set(rows.map(r=>r.fecha||''))].filter(Boolean).join(', '),
+      veces: rows.length
+    });
+  });
+
   // ---- 6c. Duplicados OB (ratio) ----
   const odtRatios = {};
   S.conciliados.concat(S.faltantes).forEach(r => {
@@ -1835,7 +1855,7 @@ async function runAuditInternal() {
     const legajos = new Set([...psmRows.map(p=>p.legajo),...obRows.map(o=>o.legajo)]);
     const cuad = psmRows[0]?.cuadNombre || obRows[0]?.cuadNombre || '';
     let estadoOdt = 'ok';
-    if (aysaR?.terminado && !obRows.length && !psmRows.length) estadoOdt='fantasma';
+    if (aysaR?.terminado && !obRows.length && !psmRows.length) estadoOdt='sin_iniciar';
     else if (!obRows.length && psmRows.length) estadoOdt='faltante';
     else if (obRows.length && (!psmRows.length || Math.abs(psmQty-obQty)>0.5)) estadoOdt='parcial';
     S.odtsMap[odt] = {
@@ -2153,7 +2173,7 @@ function renderOdts(keepPage) {
     ok:'<span class="tag t-ok">✅ Conciliada</span>',
     parcial:'<span class="tag t-warn">🟡 Parcial</span>',
     faltante:'<span class="tag t-danger">🔴 Sin Obrador</span>',
-    fantasma:'<span class="tag t-danger">⚠ Fantasma</span>',
+    sin_iniciar:'<span class="tag t-warn">⏸ Sin Iniciar</span>',
   }[e]||`<span class="tag t-gray">${esc(e)}</span>`);
 
   renderTable('tbl-odts','pag-odts',data,[
@@ -2345,6 +2365,12 @@ function renderAnomalias() {
         { title:'DUP1 — Series de medidor consumidas 2 o más veces en Obrador', data:S.duplicadosOb.filter(d=>d.tipo==='DUP1'), type:'dup' },
         { title:'DUP2 — ODTs con ratio OB/RC = 2x o 3x en todas las líneas', data:S.duplicadosOb.filter(d=>d.tipo==='DUP2'), type:'dup' },
       ] },
+    { id:'anom-t8', priority:'important', label:'IMPORTANTE', cls:'p-important',
+      title:'T8 — Serie Cruzada en RC (mismo medidor declarado en 2+ ODTs)',
+      count: S.seriesCruzadas.length,
+      items:[
+        { title:'T8 — Serie de medidor declarada en RC bajo más de una ODT diferente', data:S.seriesCruzadas, type:'t8' },
+      ] },
     { id:'anom-tc', priority:'review', label:'REVISAR', cls:'p-review',
       title:'TC — ODT Cruzada (misma serie, distinto número de ODT)',
       count: S.odtCruzada.length,
@@ -2388,6 +2414,7 @@ function renderAnomalias() {
       else if (item.type==='multiCuad') html += anomTableMultiCuad(item.data.slice(0,50));
       else if (item.type==='desvCuad')  html += anomTableDesvCuad(item.data.slice(0,50));
       else if (item.type==='error')      html += anomTableError(item.data.slice(0,50));
+      else if (item.type==='t8')        html += anomTableT8(item.data.slice(0,50));
       else if (item.type==='odtCruzada') html += anomTableOdtCruzada(item.data.slice(0,50));
       else                               html += anomTableGeneric(item.data.slice(0,50));
       if (item.data.length > 50) html += `<div style="padding:10px 18px;font-family:var(--mono);font-size:11px;color:var(--text3)">Mostrando 50 de ${item.data.length.toLocaleString()} — Exportar para ver todos</div>`;
@@ -2476,6 +2503,13 @@ function anomTableOdtCruzada(data) {
   let h='<table><thead><tr><th>Serie Medidor</th><th>ODT PSM</th><th>ODT Obrador</th><th>Legajo PSM</th><th>Cuadrilla PSM</th><th>Legajo OB</th><th>Cuadrilla OB</th><th>Fecha PSM</th><th>Fecha OB</th><th>Observación</th></tr></thead><tbody>';
   data.forEach(r=>{
     h+=`<tr><td class="td-serie">${esc(r.serie)}</td><td class="td-odt" style="color:var(--warn)">${esc(r.odtPsm)}</td><td class="td-odt" style="color:var(--ok)">${esc(r.odtOb)}</td><td>${esc(r.legajo)||'—'}</td><td>${esc(trunc(r.cuadNombre,18))}</td><td>${esc(r.legajoOb)||'—'}</td><td>${esc(trunc(r.cuadNombreOb,18))}</td><td style="font-size:11px">${esc(r.fecha||'—')}</td><td style="font-size:11px">${esc(r.fechaOb||'—')}</td><td style="font-size:10px;color:var(--text3)">${esc(trunc(r.obs,50))}</td></tr>`;
+  });
+  return h+'</tbody></table>';
+}
+function anomTableT8(data) {
+  let h='<table><thead><tr><th>Serie Medidor</th><th>Veces</th><th>ODTs en RC</th><th>Legajos</th><th>Cuadrillas</th><th>Fechas RC</th></tr></thead><tbody>';
+  data.forEach(r=>{
+    h+=`<tr><td class="td-serie">${esc(r.serie)}</td><td style="text-align:center;color:var(--danger);font-weight:700">${r.veces}</td><td style="font-family:var(--mono);font-size:11px;color:var(--warn)">${esc(r.odts)}</td><td>${esc(r.legajos||'—')}</td><td style="font-size:11px">${esc(trunc(r.cuads||'—',30))}</td><td style="font-size:11px;color:var(--text3)">${esc(r.fechas||'—')}</td></tr>`;
   });
   return h+'</tbody></table>';
 }
@@ -2731,6 +2765,7 @@ function exportAnomItem(type, title) {
     else if (type==='psmInterno') { data=S.psmInterno.map(r=>({ODT:r.odt,Tipo:r.tipoLabel,'Código':r.codigo,Legajo:r.legajo,Cuadrilla:r.cuadNombre,'Cant RC':r.cantRc,'Cant AySA':r.cantAysa,Lote:r.lote,Observación:r.obs})); sheetName='PSM Interno'; }
     else if (type==='multiCuad') { data=S.multiCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Cant Cuadrillas':r.cantCuadrillas,Cuadrillas:r.cuadrillas,Estado:r.estado,Lote:r.lote})); sheetName='Multi-Cuadrilla'; }
     else if (type==='desvCuad') { data=S.desviosCuadrilla.map(r=>({ODT:r.odt,Tipo:r.tipo,'Solo en RC':r.soloEnPsm,'Solo en OB':r.soloEnOb,Estado:r.estado,Lote:r.lote})); sheetName='Desv Cuadrilla'; }
+    else if (type==='t8') { data=S.seriesCruzadas.map(r=>({'Serie Medidor':r.serie,'Veces':r.veces,'ODTs en RC':r.odts,'Legajos':r.legajos,'Cuadrillas':r.cuads,'Fechas RC':r.fechas})); sheetName='T8 Series Cruzadas'; }
     else if (type==='odtCruzada') { data=S.odtCruzada.map(r=>({'Serie Medidor':r.serie,'ODT PSM':r.odtPsm,'ODT Obrador':r.odtOb,'Código':r.codigo,'Descripción':r.desc,'Legajo PSM':r.legajo,'Cuadrilla PSM':r.cuadNombre,'Legajo OB':r.legajoOb,'Cuadrilla OB':r.cuadNombreOb,'Fecha PSM':r.fecha,'Fecha OB':r.fechaOb,Observación:r.obs})); sheetName='ODT Cruzada'; }
     else { data=S.errores.map(r=>({ODT:r.odt,Subtipo:r.tipo,'Código':r.codigo,Descripción:r.desc,Legajo:r.legajo,'Error':r.remito,'Verificado OB':r.verificadoOb?'SI':'NO',Motivo:r.motivo})); sheetName='Errores'; }
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),sheetName);
@@ -2856,7 +2891,7 @@ if (zInf) {
 function showRowDetail(pageKey, ridx) {
   let row;
   if (pageKey==='medidores') row = S.medidores[ridx];
-  else if (pageKey==='odts') row = Object.values(S.odtsMap)[ridx];
+  else if (pageKey==='odts') { row = Object.values(S.odtsMap)[ridx]; if (row) { showOdtDetail(row.odt); return; } }
   else if (pageKey==='conciliados') row = S.conciliados[ridx];
   else if (pageKey==='panel') row = Object.values(S.stockPanel)[ridx];
   if (!row) return;
@@ -2868,9 +2903,49 @@ function showRowDetail(pageKey, ridx) {
   openModal(`Detalle — ${pageKey}`, body);
 }
 
+function showOdtDetail(odt) {
+  const row = S.odtsMap[odt];
+  if (!row) return;
+  const byCode = {};
+  S.psmNorm.filter(p=>p.odt===odt && p.codigo).forEach(p => {
+    if (!byCode[p.codigo]) byCode[p.codigo] = { codigo:p.codigo, desc:p.desc||p.codigo, psm:0, ob:0, series:[] };
+    byCode[p.codigo].psm += (p.qty||1);
+    if (p.serie && !byCode[p.codigo].series.includes(p.serie)) byCode[p.codigo].series.push(p.serie);
+  });
+  S.obrNorm.filter(o=>o.odt===odt && o.codigo && o.movimiento && o.movimiento.includes('CONSUMO EN OBRA')).forEach(o => {
+    if (!byCode[o.codigo]) byCode[o.codigo] = { codigo:o.codigo, desc:o.desc||o.codigo, psm:0, ob:0, series:[] };
+    byCode[o.codigo].ob += (o.qty||1);
+  });
+  const codes = Object.values(byCode).sort((a,b)=>b.psm-a.psm||b.ob-a.ob);
+  const estLabel = ({ok:'✅ Conciliada', parcial:'🟡 Parcial', faltante:'🔴 Sin Obrador', sin_iniciar:'⏸ Sin Iniciar'}[row.estadoOdt]||row.estadoOdt);
+  let body = `<dl class="modal-kv" style="margin-bottom:18px">`;
+  if (row.lote)      body += `<dt>Lote</dt><dd>${esc(row.lote)}</dd>`;
+  if (row.titular)   body += `<dt>Titular</dt><dd>${esc(row.titular)}</dd>`;
+  if (row.direccion) body += `<dt>Dirección</dt><dd>${esc(row.direccion)}</dd>`;
+  if (row.localidad) body += `<dt>Localidad</dt><dd>${esc(row.localidad)}</dd>`;
+  if (row.legajos)   body += `<dt>Cuadrillas</dt><dd>${esc(row.legajos)}</dd>`;
+  if (row.estadoAysa)body += `<dt>Estado AySA</dt><dd>${esc(row.estadoAysa)}</dd>`;
+  body += `<dt>Fotos</dt><dd>${row.fotoOk?'✅ OK':'—'}</dd>`;
+  body += `</dl>`;
+  if (codes.length) {
+    body += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">Materiales — PSM vs Obrador</div>`;
+    body += `<div class="table-wrap"><table><thead><tr><th>Código</th><th>Descripción</th><th style="text-align:right">PSM</th><th style="text-align:right">OB</th><th style="text-align:right">Δ</th><th>Series RC</th></tr></thead><tbody>`;
+    codes.forEach(c => {
+      const delta = c.ob - c.psm;
+      const dColor = delta===0?'var(--ok)':delta>0?'var(--warn)':'var(--danger)';
+      const dStr = delta===0?'=':(delta>0?'+'+delta.toFixed(0):delta.toFixed(0));
+      body += `<tr><td style="font-family:var(--mono);font-size:11px">${esc(c.codigo)}</td><td>${esc(trunc(c.desc,28))}</td><td style="text-align:right;font-family:var(--mono)">${c.psm||'—'}</td><td style="text-align:right;font-family:var(--mono)">${c.ob||'—'}</td><td style="text-align:right;font-family:var(--mono);font-weight:700;color:${dColor}">${dStr}</td><td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${c.series.length?c.series.join(', '):'—'}</td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  } else {
+    body += `<div style="color:var(--text3);font-size:13px;padding:12px 0">Sin materiales registrados para esta ODT.</div>`;
+  }
+  openModal(`${esc(odt)} — ${estLabel}`, body);
+}
+
 // Banner de restauracion si hay sesion anterior
 checkRestoreOnLoad();
-console.log('AuditorPro EMA v5.1 — XLSX lazy loader activo.');
+console.log('AuditorPro EMA v5.1 — cargado correctamente.');
 </script>
 
 <script>
@@ -2892,4 +2967,9 @@ console.log('AuditorPro EMA v5.1 — XLSX lazy loader activo.');
     document.body.style.overflow = '';
   }
 
-  bt
+  btn.addEventListener('click', openSidebar);
+  overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+</body>
+</h
